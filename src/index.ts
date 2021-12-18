@@ -6,6 +6,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import { appHealthRouter } from './app-health/app-health.router';
+import * as JARVIB from '../src/jarvib-commands/jarvib-commands.service';
 
 dotenv.config();
 /**
@@ -39,3 +40,5 @@ app.use("/api/v1/status", appHealthRouter);
 app.listen(PORT, () => {
   console.log(`SERVICE INFO: Listening on port ${PORT}...`);
 });
+
+JARVIB.startListening();

@@ -21,11 +21,16 @@
   "author": "Darrel Pol",
   "license": "ISC",
   "dependencies": {
+    "@discordjs/rest": "0.1.0-canary.0",
     "cors": "^2.8.5",
+    "discord-api-types": "^0.25.2",
+    "discord.js": "^13.3.1",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
     "helmet": "^4.6.0",
-    "install": "^0.13.0"
+    "install": "^0.13.0",
+    "n": "^8.0.1",
+    "node": "^17.3.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.10",
@@ -34,6 +39,7 @@
     "@types/helmet": "^4.0.0",
     "@types/jest": "^26.0.23",
     "@types/node": "^15.12.2",
+    "eslint": "^8.5.0",
     "jest": "^27.0.4",
     "nodemon": "^2.0.7",
     "rimraf": "^3.0.2",
