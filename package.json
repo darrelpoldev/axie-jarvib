@@ -1,7 +1,7 @@
 {
-  "name": "legacy-data-writer",
+  "name": "axie-jarvib",
   "version": "1.0.0",
-  "description": "Consumer app that processes legacy events.",
+  "description": "Just Another Rather Intelligent Bot for Axie.",
   "main": "index.js",
   "scripts": {
     "test": "npx jest --watch",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@gitlab.kore.korewireless.com:architecture-team/proof-of-concepts/new-legacy-sync/legacy-sync-operator.git"
+    "url": "git@github.com:poldarreldev/axie-jarvib.git"
   },
   "keywords": [
     "nodejs-template",
