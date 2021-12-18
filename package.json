@@ -1,0 +1,45 @@
+{
+  "name": "legacy-data-writer",
+  "version": "1.0.0",
+  "description": "Consumer app that processes legacy events.",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx jest --watch",
+    "start:dev": "nodemon",
+    "dev": "ts-node-dev --respawn --pretty --transpile-only src/index.ts",
+    "build": "rimraf ./build && tsc",
+    "start": "npm run build && node build/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.kore.korewireless.com:architecture-team/proof-of-concepts/new-legacy-sync/legacy-sync-operator.git"
+  },
+  "keywords": [
+    "nodejs-template",
+    "template"
+  ],
+  "author": "Darrel Pol",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "helmet": "^4.6.0",
+    "install": "^0.13.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.10",
+    "@types/dotenv": "^8.2.0",
+    "@types/express": "^4.17.12",
+    "@types/helmet": "^4.0.0",
+    "@types/jest": "^26.0.23",
+    "@types/node": "^15.12.2",
+    "jest": "^27.0.4",
+    "nodemon": "^2.0.7",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^27.0.3",
+    "ts-node": "^10.0.0",
+    "ts-node-dev": "^1.1.6",
+    "typescript": "^4.3.2"
+  }
+}
