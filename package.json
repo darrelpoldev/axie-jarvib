@@ -31,7 +31,8 @@
     "helmet": "^4.6.0",
     "install": "^0.13.0",
     "n": "^8.0.1",
-    "node": "^17.3.0"
+    "node": "^17.3.0",
+    "rimraf": "^3.0.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.10",
