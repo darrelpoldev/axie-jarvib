@@ -45,13 +45,9 @@ var _a = require('discord.js'), Client = _a.Client, Intents = _a.Intents;
 var SlashCommandBuilder = require('@discordjs/builders').SlashCommandBuilder;
 var REST = require('@discordjs/rest').REST;
 var Routes = require('discord-api-types/v9').Routes;
-var discordClientId = process.env.discordClientId;
-var discordGuildId = process.env.discordGuildId;
-var discordToken = process.env.discordToken;
 var discordCommands = [
-    new SlashCommandBuilder().setName('ping').setDescription('Replies with pong!'),
-    new SlashCommandBuilder().setName('server').setDescription('Replies with server info!'),
-    new SlashCommandBuilder().setName('user').setDescription('Replies with user info!')
+    new SlashCommandBuilder().setName('ping').setDescription('Send for a surprise!'),
+    new SlashCommandBuilder().setName('jarvib').setDescription('Send for a surprise!'),
 ].map(function (command) { return command.toJSON(); });
 /**
  * Call Repository
@@ -62,8 +58,8 @@ var discordCommands = [
 var setUpCommands = function () { return __awaiter(void 0, void 0, void 0, function () {
     var rest;
     return __generator(this, function (_a) {
-        rest = new REST({ version: '9' }).setToken(discordToken);
-        rest.put(Routes.applicationGuildCommands(discordClientId, discordGuildId), { body: discordCommands })
+        rest = new REST({ version: '9' }).setToken(process.env.discordToken);
+        rest.put(Routes.applicationGuildCommands(process.env.discordClientId, process.env.discordGuildId), { body: discordCommands })
             .then(function () {
             console.log('Successfully registered application commands.');
         })
@@ -80,9 +76,30 @@ var startListening = function () { return __awaiter(void 0, void 0, void 0, func
         discordClient = new Client({ intents: [Intents.FLAGS.GUILDS] });
         discordClient.once('ready', function () {
             console.log('Ready!');
-            //  setUpCommands();
+            exports.setUpCommands();
         });
-        discordClient.login(discordToken);
+        discordClient.on('interactionCreate', function (interaction) { return __awaiter(void 0, void 0, void 0, function () {
+            var commandName;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!interaction.isCommand())
+                            return [2 /*return*/];
+                        commandName = interaction.commandName;
+                        if (!(commandName === "ping")) return [3 /*break*/, 2];
+                        return [4 /*yield*/, interaction.reply('PING ina mo!')];
+                    case 1:
+                        _a.sent();
+                        return [3 /*break*/, 3];
+                    case 2:
+                        if (commandName === "jarvib") {
+                        }
+                        _a.label = 3;
+                    case 3: return [2 /*return*/];
+                }
+            });
+        }); });
+        discordClient.login(process.env.discordToken);
         return [2 /*return*/];
     });
 }); };
