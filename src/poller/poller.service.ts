@@ -26,7 +26,7 @@ export class EventPoller extends EventEmitter implements IWorker {
         this.on(EventTypes.TICK, async () => {
             try {
                 const currentDate = new Date();
-                console.log('checking...', currentDate);
+                console.log('checking...', currentDate.toString());
             } catch (error) {
                 console.error(`Error on ${EventTypes.TICK}`, error);
             }
