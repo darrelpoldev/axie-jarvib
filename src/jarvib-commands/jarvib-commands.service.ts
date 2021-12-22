@@ -32,20 +32,40 @@ export const setUpCommands = async () => {
 };
 
 export const startListening = async () => {
-    const discordClient = new Client({ intents: [Intents.FLAGS.GUILDS] });
+    const discordClient = new Client({
+        intents: [
+            Intents.FLAGS.GUILDS,
+            Intents.FLAGS.GUILD_MESSAGES
+        ]
+    });
+    const prefix = `${process.env.botPrefix}`;
+    console.log(prefix);
     discordClient.once('ready', () => {
         console.log('Ready!');
-        setUpCommands();
+        //  setUpCommands();
     });
 
-    discordClient.on('interactionCreate', async (interaction: any) => {
-        if (!interaction.isCommand()) return;
+    // discordClient.on('interactionCreate', async (interaction: any) => {
+    //     if (!interaction.isCommand()) return;
 
-        const { commandName } = interaction;
-        if (commandName === `ping`) {
-            await interaction.reply('PING ina mo!');
-        } else if (commandName === "jarvib") {
+    //     const { commandName } = interaction;
+    //     if (commandName === `ping`) {
+    //         await interaction.reply('PING ina mo!');
+    //     } else if (commandName === "jarvib") {
 
+    //     }
+    // });
+
+    discordClient.on('messageCreate', (message: any) => {
+        if (message.author.bot) return;
+        if (!message.content.startsWith(`${prefix} `)) return;
+        console.log(message.content);
+        const commandBody = message.content.slice(prefix.length);
+        const args = commandBody.split(' ');
+        const command = args[1];
+        const options = args[2];
+        if (command === "ping") {
+            message.reply(`Hello **${message.author.tag}**. What can I do for you?`);
         }
     })
 
