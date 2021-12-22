@@ -25,8 +25,11 @@ export class EventPoller extends EventEmitter implements IWorker {
         this.poll(`${process.env.pollingInterval}`);
         this.on(EventTypes.TICK, async () => {
             try {
-                const currentDate = new Date();
-                console.log('checking...', currentDate.toString());
+                const utcDate = new Date();
+                const localDateTime = new Date(utcDate.toString());
+                console.log('checking...', localDateTime.getHours());
+                //  If 8AM, Grab roninaddress details
+                //  Then, send discord chat ONCE
             } catch (error) {
                 console.error(`Error on ${EventTypes.TICK}`, error);
             }
