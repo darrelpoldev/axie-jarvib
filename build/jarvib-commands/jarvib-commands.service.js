@@ -37,6 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.startListening = exports.setUpCommands = void 0;
+var poller_service_1 = require("../poller/poller.service");
 /**
  * Data Model Interfaces
  * Libraries
@@ -71,34 +72,44 @@ var setUpCommands = function () { return __awaiter(void 0, void 0, void 0, funct
 }); };
 exports.setUpCommands = setUpCommands;
 var startListening = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var discordClient;
+    var discordClient, prefix;
     return __generator(this, function (_a) {
-        discordClient = new Client({ intents: [Intents.FLAGS.GUILDS] });
+        discordClient = new Client({
+            intents: [
+                Intents.FLAGS.GUILDS,
+                Intents.FLAGS.GUILD_MESSAGES
+            ]
+        });
+        prefix = "" + process.env.botPrefix;
+        console.log(prefix);
         discordClient.once('ready', function () {
             console.log('Ready!');
-            exports.setUpCommands();
+            var engine = new poller_service_1.EventPoller();
+            engine.start();
+            //  setUpCommands();
         });
-        discordClient.on('interactionCreate', function (interaction) { return __awaiter(void 0, void 0, void 0, function () {
-            var commandName;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!interaction.isCommand())
-                            return [2 /*return*/];
-                        commandName = interaction.commandName;
-                        if (!(commandName === "ping")) return [3 /*break*/, 2];
-                        return [4 /*yield*/, interaction.reply('PING ina mo!')];
-                    case 1:
-                        _a.sent();
-                        return [3 /*break*/, 3];
-                    case 2:
-                        if (commandName === "jarvib") {
-                        }
-                        _a.label = 3;
-                    case 3: return [2 /*return*/];
-                }
-            });
-        }); });
+        // discordClient.on('interactionCreate', async (interaction: any) => {
+        //     if (!interaction.isCommand()) return;
+        //     const { commandName } = interaction;
+        //     if (commandName === `ping`) {
+        //         await interaction.reply('PING ina mo!');
+        //     } else if (commandName === "jarvib") {
+        //     }
+        // });
+        discordClient.on('messageCreate', function (message) {
+            if (message.author.bot)
+                return;
+            if (!message.content.startsWith(prefix + " "))
+                return;
+            console.log(message.content);
+            var commandBody = message.content.slice(prefix.length);
+            var args = commandBody.split(' ');
+            var command = args[1];
+            var options = args[2];
+            if (command === "ping") {
+                message.reply("Hello **" + message.author.tag + "**. What can I do for you?");
+            }
+        });
         discordClient.login(process.env.discordToken);
         return [2 /*return*/];
     });

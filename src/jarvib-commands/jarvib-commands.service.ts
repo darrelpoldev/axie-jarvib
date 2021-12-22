@@ -1,3 +1,5 @@
+import { EventPoller } from "../poller/poller.service";
+
 /**
  * Data Model Interfaces
  * Libraries
@@ -42,6 +44,9 @@ export const startListening = async () => {
     console.log(prefix);
     discordClient.once('ready', () => {
         console.log('Ready!');
+        const engine = new EventPoller();
+        engine.start();
+
         //  setUpCommands();
     });
 
