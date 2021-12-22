@@ -56,6 +56,7 @@ exports.EventPoller = void 0;
  * Data Model Interfaces
  * Libraries
  */
+var discord_js_1 = require("discord.js");
 var events_1 = require("events");
 var poller_interface_1 = require("./poller.interface");
 /**
@@ -66,20 +67,45 @@ var poller_interface_1 = require("./poller.interface");
  */
 var EventPoller = /** @class */ (function (_super) {
     __extends(EventPoller, _super);
-    function EventPoller() {
-        return _super.call(this) || this;
+    function EventPoller(_discordClient) {
+        var _this = _super.call(this) || this;
+        _this.discordClient = new discord_js_1.Client({
+            intents: [
+                discord_js_1.Intents.FLAGS.GUILDS,
+                discord_js_1.Intents.FLAGS.GUILD_MESSAGES
+            ]
+        });
+        _this.discordClient = _discordClient;
+        return _this;
     }
     EventPoller.prototype.start = function () {
         var _this = this;
         console.info("polling starts");
+        var sent = false;
         this.poll("" + process.env.pollingInterval);
         this.on(poller_interface_1.EventTypes.TICK, function () { return __awaiter(_this, void 0, void 0, function () {
-            var utcDate, localDateTime;
+            var hourToNotify, utcDate, localDateTime, currentHour, channel;
             return __generator(this, function (_a) {
                 try {
+                    hourToNotify = process.env.hourToNotify || 8;
                     utcDate = new Date();
                     localDateTime = new Date(utcDate.toString());
-                    console.log('checking...', localDateTime.getHours());
+                    currentHour = localDateTime.getHours();
+                    console.log(hourToNotify);
+                    if (currentHour == hourToNotify && !sent) {
+                        channel = this.discordClient.channels.cache.get('862115684820844544');
+                        if (channel === null || channel === void 0 ? void 0 : channel.isText()) {
+                            channel.send("Tangina alas OTSO na. Oras na para malaman pinaka noob sa inyo!");
+                        }
+                        sent = true;
+                    }
+                    else if (currentHour != hourToNotify) {
+                        sent = false;
+                        console.log('resetting sent value to false at...', localDateTime);
+                    }
+                    else {
+                        console.log('checking at...', localDateTime);
+                    }
                 }
                 catch (error) {
                     console.error("Error on " + poller_interface_1.EventTypes.TICK, error);

@@ -44,27 +44,13 @@ export const startListening = async () => {
     console.log(prefix);
     discordClient.once('ready', () => {
         console.log('Ready!');
-        const engine = new EventPoller();
+        const engine = new EventPoller(discordClient);
         engine.start();
-
-        //  setUpCommands();
     });
-
-    // discordClient.on('interactionCreate', async (interaction: any) => {
-    //     if (!interaction.isCommand()) return;
-
-    //     const { commandName } = interaction;
-    //     if (commandName === `ping`) {
-    //         await interaction.reply('PING ina mo!');
-    //     } else if (commandName === "jarvib") {
-
-    //     }
-    // });
 
     discordClient.on('messageCreate', (message: any) => {
         if (message.author.bot) return;
         if (!message.content.startsWith(`${prefix} `)) return;
-        console.log(message.content);
         const commandBody = message.content.slice(prefix.length);
         const args = commandBody.split(' ');
         const command = args[1];

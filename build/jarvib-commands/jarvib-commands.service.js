@@ -84,24 +84,14 @@ var startListening = function () { return __awaiter(void 0, void 0, void 0, func
         console.log(prefix);
         discordClient.once('ready', function () {
             console.log('Ready!');
-            var engine = new poller_service_1.EventPoller();
+            var engine = new poller_service_1.EventPoller(discordClient);
             engine.start();
-            //  setUpCommands();
         });
-        // discordClient.on('interactionCreate', async (interaction: any) => {
-        //     if (!interaction.isCommand()) return;
-        //     const { commandName } = interaction;
-        //     if (commandName === `ping`) {
-        //         await interaction.reply('PING ina mo!');
-        //     } else if (commandName === "jarvib") {
-        //     }
-        // });
         discordClient.on('messageCreate', function (message) {
             if (message.author.bot)
                 return;
             if (!message.content.startsWith(prefix + " "))
                 return;
-            console.log(message.content);
             var commandBody = message.content.slice(prefix.length);
             var args = commandBody.split(' ');
             var command = args[1];
