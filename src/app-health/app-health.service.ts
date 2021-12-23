@@ -4,7 +4,7 @@
  */
 import { url } from 'inspector';
 import { AppHealth, AppHealthStatus } from './app-health.interfaces';
-const http = require('http');
+const axios = require('axios');
 
 /**
  * Call Repository
@@ -25,19 +25,11 @@ export const v1 = async (): Promise<AppHealth> => {
 
 export const selfPing = async () => {
   const url = `${process.env.healthCheckEndpoint}`;
-  console.log(url);
-  http.get(url, (response: any) => {
+  const config = {
+    method: 'GET',
+    url: url
+  };
 
-    let data = '';
-    response.on('data', (chunk: any) => {
-      data += chunk;
-    });
-
-    response.on('end', () => {
-      console.log(data);
-    });
-
-  }).on('error', (error: any) => {
-    console.log(`Unable to ping host.`, url, error);
-  });
+  let result = await axios(config);
+  console.log(result.data);
 }

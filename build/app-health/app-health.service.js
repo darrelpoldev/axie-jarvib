@@ -38,7 +38,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.selfPing = exports.v1 = void 0;
 var app_health_interfaces_1 = require("./app-health.interfaces");
-var http = require('http');
+var axios = require('axios');
 /**
  * Call Repository
  */
@@ -57,22 +57,21 @@ var v1 = function () { return __awaiter(void 0, void 0, void 0, function () {
 }); };
 exports.v1 = v1;
 var selfPing = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var url;
+    var url, config, result;
     return __generator(this, function (_a) {
-        url = "" + process.env.healthCheckEndpoint;
-        console.log(url);
-        http.get(url, function (response) {
-            var data = '';
-            response.on('data', function (chunk) {
-                data += chunk;
-            });
-            response.on('end', function () {
-                console.log(data);
-            });
-        }).on('error', function (error) {
-            console.log("Unable to ping host.", url, error);
-        });
-        return [2 /*return*/];
+        switch (_a.label) {
+            case 0:
+                url = "" + process.env.healthCheckEndpoint;
+                config = {
+                    method: 'GET',
+                    url: url
+                };
+                return [4 /*yield*/, axios(config)];
+            case 1:
+                result = _a.sent();
+                console.log(result.data);
+                return [2 /*return*/];
+        }
     });
 }); };
 exports.selfPing = selfPing;
