@@ -32,6 +32,7 @@ export class EventPoller extends EventEmitter implements IWorker {
     start() {
         console.info("polling starts");
         let sent = false;
+        const axieScholarRoleId = process.env.axieScholarRoleId;
         this.poll(`${process.env.pollingInterval}`);
         this.on(EventTypes.TICK, async () => {
             try {
@@ -43,7 +44,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                 if (currentHour == hourToNotify && !sent) {
                     const channel = this.discordClient.channels.cache.get('862115684820844544');
                     if (channel?.isText()) {
-                        channel.send(`Tangina alas OTSO na. Oras na para malaman pinaka noob sa inyo!`);
+                        channel.send(`Hey <@&${axieScholarRoleId}>(s) here's your daily reset alert. Brought to you by your BOT police, JARVIB.`);
                     }
                     sent = true;
                 }
