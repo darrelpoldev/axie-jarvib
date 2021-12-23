@@ -36,12 +36,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.v1 = void 0;
-/**
- * Data Model Interfaces
- * Libraries
- */
+exports.selfPing = exports.v1 = void 0;
 var app_health_interfaces_1 = require("./app-health.interfaces");
+var http = require('http');
 /**
  * Call Repository
  */
@@ -59,3 +56,23 @@ var v1 = function () { return __awaiter(void 0, void 0, void 0, function () {
     });
 }); };
 exports.v1 = v1;
+var selfPing = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var url;
+    return __generator(this, function (_a) {
+        url = "" + process.env.healthCheckEndpoint;
+        console.log(url);
+        http.get(url, function (response) {
+            var data = '';
+            response.on('data', function (chunk) {
+                data += chunk;
+            });
+            response.on('end', function () {
+                console.log(data);
+            });
+        }).on('error', function (error) {
+            console.log("Unable to ping host.", url, error);
+        });
+        return [2 /*return*/];
+    });
+}); };
+exports.selfPing = selfPing;

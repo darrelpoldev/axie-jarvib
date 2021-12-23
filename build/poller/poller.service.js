@@ -58,6 +58,7 @@ exports.EventPoller = void 0;
  */
 var discord_js_1 = require("discord.js");
 var events_1 = require("events");
+var app_health_service_1 = require("../app-health/app-health.service");
 var poller_interface_1 = require("./poller.interface");
 /**
  * Call Repository
@@ -106,6 +107,7 @@ var EventPoller = /** @class */ (function (_super) {
                     else {
                         console.log('checking at...', localDateTime);
                     }
+                    app_health_service_1.selfPing();
                 }
                 catch (error) {
                     console.error("Error on " + poller_interface_1.EventTypes.TICK, error);

@@ -4,6 +4,7 @@
  */
 import { ChannelManager, Client, Intents, Channel } from "discord.js";
 import { EventEmitter } from "events";
+import { selfPing } from "../app-health/app-health.service";
 import { EventTypes, IWorker } from "./poller.interface";
 
 
@@ -53,6 +54,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                 else {
                     console.log('checking at...', localDateTime);
                 }
+                selfPing();
             } catch (error) {
                 console.error(`Error on ${EventTypes.TICK}`, error);
             }
