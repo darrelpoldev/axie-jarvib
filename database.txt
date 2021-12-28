@@ -8,6 +8,7 @@ jarvib_db
     accumulated_slp
         -   id
         -   scholarId
+        -   roninAddress
         -   total
         -   createdOn
 

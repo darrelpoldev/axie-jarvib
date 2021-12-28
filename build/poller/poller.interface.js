@@ -4,4 +4,5 @@ exports.EventTypes = void 0;
 var EventTypes;
 (function (EventTypes) {
     EventTypes["TICK"] = "TICK";
+    EventTypes["DailyReset"] = "DailyReset";
 })(EventTypes = exports.EventTypes || (exports.EventTypes = {}));

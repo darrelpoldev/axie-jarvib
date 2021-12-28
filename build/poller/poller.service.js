@@ -59,6 +59,8 @@ exports.EventPoller = void 0;
 var discord_js_1 = require("discord.js");
 var events_1 = require("events");
 var app_health_service_1 = require("../app-health/app-health.service");
+var ronin_service_1 = require("../ronin/ronin.service");
+var scholars_service_1 = require("../scholars/scholars.service");
 var poller_interface_1 = require("./poller.interface");
 /**
  * Call Repository
@@ -80,42 +82,93 @@ var EventPoller = /** @class */ (function (_super) {
         return _this;
     }
     EventPoller.prototype.start = function () {
-        var _this = this;
-        console.info("polling starts");
-        var sent = false;
-        this.poll("" + process.env.pollingInterval);
-        this.on(poller_interface_1.EventTypes.TICK, function () { return __awaiter(_this, void 0, void 0, function () {
-            var hourToNotify, utcDate, localDateTime, currentHour, channel;
+        return __awaiter(this, void 0, void 0, function () {
+            var sent, axieScholarRoleId;
+            var _this = this;
             return __generator(this, function (_a) {
-                try {
-                    hourToNotify = process.env.hourToNotify || 8;
-                    utcDate = new Date();
-                    localDateTime = new Date(utcDate.toString());
-                    currentHour = localDateTime.getHours();
-                    console.log(hourToNotify);
-                    if (currentHour == hourToNotify && !sent) {
-                        channel = this.discordClient.channels.cache.get('862115684820844544');
-                        if (channel === null || channel === void 0 ? void 0 : channel.isText()) {
-                            channel.send("Tangina alas OTSO na. Oras na para malaman pinaka noob sa inyo!");
-                        }
-                        sent = true;
-                    }
-                    else if (currentHour != hourToNotify) {
-                        sent = false;
-                        console.log('resetting sent value to false at...', localDateTime);
-                    }
-                    else {
-                        console.log('checking at...', localDateTime);
-                    }
-                    app_health_service_1.selfPing();
-                }
-                catch (error) {
-                    console.error("Error on " + poller_interface_1.EventTypes.TICK, error);
-                }
+                console.info("polling starts");
+                sent = false;
+                axieScholarRoleId = process.env.axieScholarRoleId;
                 this.poll("" + process.env.pollingInterval);
+                this.on(poller_interface_1.EventTypes.TICK, function () { return __awaiter(_this, void 0, void 0, function () {
+                    var hourToNotify, utcDate, localDateTime, currentHour, channel;
+                    return __generator(this, function (_a) {
+                        try {
+                            hourToNotify = process.env.hourToNotify || 8;
+                            utcDate = new Date();
+                            localDateTime = new Date(utcDate.toString());
+                            currentHour = localDateTime.getHours();
+                            if (currentHour == hourToNotify && !sent) {
+                                channel = this.discordClient.channels.cache.get('862115684820844544');
+                                if (channel === null || channel === void 0 ? void 0 : channel.isText()) {
+                                    //  channel.send(`Hey <@&${axieScholarRoleId}>(s) here's your daily reset alert. Brought to you by your BOT police, JARVIB.`);
+                                    this.emit(poller_interface_1.EventTypes.DailyReset);
+                                }
+                                sent = true;
+                            }
+                            else if (currentHour != hourToNotify) {
+                                sent = false;
+                                console.log('resetting sent value to false at...', localDateTime);
+                            }
+                            else {
+                                console.log('checking at...', localDateTime);
+                            }
+                            app_health_service_1.selfPing();
+                        }
+                        catch (error) {
+                            console.error("Error on " + poller_interface_1.EventTypes.TICK, error);
+                        }
+                        return [2 /*return*/];
+                    });
+                }); });
+                this.on(poller_interface_1.EventTypes.DailyReset, function () { return __awaiter(_this, void 0, void 0, function () {
+                    var scholars, error_1;
+                    var _this = this;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                _a.trys.push([0, 2, , 3]);
+                                return [4 /*yield*/, scholars_service_1.getScholars()];
+                            case 1:
+                                scholars = _a.sent();
+                                scholars.forEach(function (scholar) { return __awaiter(_this, void 0, void 0, function () {
+                                    var roninAddress, scholarDetails, scholarDetail, accumulated_SLP;
+                                    var _a;
+                                    return __generator(this, function (_b) {
+                                        switch (_b.label) {
+                                            case 0:
+                                                roninAddress = scholar.roninAddress;
+                                                return [4 /*yield*/, ronin_service_1.getTotalSLPByRonin(roninAddress)];
+                                            case 1:
+                                                scholarDetails = _b.sent();
+                                                scholarDetail = scholarDetails.shift();
+                                                _a = {
+                                                    id: 0
+                                                };
+                                                return [4 /*yield*/, scholars_service_1.toRoninAddress(scholarDetail["client_id"])];
+                                            case 2:
+                                                accumulated_SLP = (_a.roninAddress = _b.sent(),
+                                                    _a.createdOn = "",
+                                                    _a.scholarId = 1,
+                                                    _a.total = scholarDetail["total"],
+                                                    _a);
+                                                console.log(accumulated_SLP);
+                                                return [2 /*return*/];
+                                        }
+                                    });
+                                }); });
+                                return [3 /*break*/, 3];
+                            case 2:
+                                error_1 = _a.sent();
+                                console.log("Unable to compose daily report...", error_1);
+                                return [3 /*break*/, 3];
+                            case 3: return [2 /*return*/];
+                        }
+                    });
+                }); });
                 return [2 /*return*/];
             });
-        }); });
+        });
     };
     EventPoller.prototype.stop = function () {
         console.info('polling stops');
