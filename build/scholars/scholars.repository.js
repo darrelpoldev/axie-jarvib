@@ -1,8 +1,4 @@
 "use strict";
-/**
- * Data Model Interfaces
- * Libraries
- */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -40,7 +36,12 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.listScholars = void 0;
+exports.addAccumulatedSLP = exports.listScholars = exports.getPostgresClient = void 0;
+/**
+ * Data Model Interfaces
+ * Libraries
+ */
+var Client = require('pg').Client;
 var scholars = [
     {
         id: 1,
@@ -58,12 +59,56 @@ var scholars = [
 /**
  * Call Repository
  */
-/**
- * Service Methods
- */
+var getPostgresClient = function () {
+    return new Client({
+        host: "" + process.env.postgresHost,
+        port: "" + process.env.postgresPort,
+        user: "" + process.env.postgresUser,
+        password: "" + process.env.postgresPassword,
+        database: "" + process.env.postgresDatabase,
+        ssl: { rejectUnauthorized: false }
+    });
+};
+exports.getPostgresClient = getPostgresClient;
 var listScholars = function () { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         return [2 /*return*/, scholars];
     });
 }); };
 exports.listScholars = listScholars;
+var addAccumulatedSLP = function (accumulated_SLP) { return __awaiter(void 0, void 0, void 0, function () {
+    var psqlClient, err_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                psqlClient = exports.getPostgresClient();
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 4, 5, 7]);
+                return [4 /*yield*/, psqlClient.connect()];
+            case 2:
+                _a.sent();
+                return [4 /*yield*/, psqlClient.query("INSERT INTO accumulated_SLP (scholarId, roninAddress, total, created_on)\n        VALUES ($1, $2, $3, current_timestamp)", [
+                        accumulated_SLP.scholarId,
+                        accumulated_SLP.roninAddress,
+                        accumulated_SLP.total
+                    ])];
+            case 3:
+                _a.sent();
+                return [2 /*return*/, true];
+            case 4:
+                err_1 = _a.sent();
+                console.log(err_1);
+                return [2 /*return*/, false];
+            case 5: return [4 /*yield*/, psqlClient.end()];
+            case 6:
+                _a.sent();
+                return [7 /*endfinally*/];
+            case 7: return [2 /*return*/];
+        }
+    });
+}); };
+exports.addAccumulatedSLP = addAccumulatedSLP;
+/**
+ * Service Methods
+ */

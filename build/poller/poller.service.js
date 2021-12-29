@@ -60,6 +60,7 @@ var discord_js_1 = require("discord.js");
 var events_1 = require("events");
 var app_health_service_1 = require("../app-health/app-health.service");
 var ronin_service_1 = require("../ronin/ronin.service");
+var scholars_repository_1 = require("../scholars/scholars.repository");
 var scholars_service_1 = require("../scholars/scholars.service");
 var poller_interface_1 = require("./poller.interface");
 /**
@@ -132,7 +133,7 @@ var EventPoller = /** @class */ (function (_super) {
                             case 1:
                                 scholars = _a.sent();
                                 scholars.forEach(function (scholar) { return __awaiter(_this, void 0, void 0, function () {
-                                    var roninAddress, scholarDetails, scholarDetail, accumulated_SLP;
+                                    var roninAddress, scholarDetails, scholarDetail, accumulated_SLP, result;
                                     var _a;
                                     return __generator(this, function (_b) {
                                         switch (_b.label) {
@@ -152,7 +153,12 @@ var EventPoller = /** @class */ (function (_super) {
                                                     _a.scholarId = 1,
                                                     _a.total = scholarDetail["total"],
                                                     _a);
-                                                console.log(accumulated_SLP);
+                                                return [4 /*yield*/, scholars_repository_1.addAccumulatedSLP(accumulated_SLP)];
+                                            case 3:
+                                                result = _b.sent();
+                                                if (result) {
+                                                    console.log('Saved.');
+                                                }
                                                 return [2 /*return*/];
                                         }
                                     });

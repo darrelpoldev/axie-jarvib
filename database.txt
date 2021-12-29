@@ -14,5 +14,14 @@ jarvib_db
 
 CREATE TABLE scholars (id serial PRIMARY KEY, roninAddress VARCHAR ( 255 ) UNIQUE NOT NULL, name VARCHAR ( 255 ) NOT NULL, created_on TIMESTAMP NOT NULL);
 
+CREATE TABLE accumulated_SLP (
+id SERIAL NOT NULL PRIMARY KEY,
+scholarId INT NOT NULL,
+roninAddress VARCHAR(255),
+total INT NOT NULL,
+created_on TIMESTAMP NOT NULL,
+FOREIGN KEY (scholarId) REFERENCES scholars (id));
+
+
 CREATE TABLE accumulated_slp (id serial PRIMARY KEY, scholarId INT NOT NULL, roninAddress VARCHAR ( 255 ) UNIQUE NOT NULL, total INT NOT NULL, created_on TIMESTAMP NOT NULL, FOREIGN KEY (scholarId) REFERENCES scholars (id));
 

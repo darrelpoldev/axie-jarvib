@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import { selfPing } from "../app-health/app-health.service";
 import { getTotalSLPByRonin } from "../ronin/ronin.service";
 import { Accumulated_SLP, Scholar } from "../scholars/scholars.interface";
+import { addAccumulatedSLP } from "../scholars/scholars.repository";
 import { getScholars, toRoninAddress } from "../scholars/scholars.service";
 import { EventTypes, IWorker } from "./poller.interface";
 
@@ -79,7 +80,10 @@ export class EventPoller extends EventEmitter implements IWorker {
                         scholarId: 1,
                         total: scholarDetail["total"]
                     };
-                    console.log(accumulated_SLP);
+                    const result = await addAccumulatedSLP(accumulated_SLP);
+                    if (result) {
+                        console.log('Saved.');
+                    }
                 });
             } catch (error) {
                 console.log(`Unable to compose daily report...`, error);

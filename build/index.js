@@ -31,6 +31,7 @@ var cors_1 = __importDefault(require("cors"));
 var helmet_1 = __importDefault(require("helmet"));
 var app_health_router_1 = require("./app-health/app-health.router");
 var JARVIB = __importStar(require("./jarvib-commands/jarvib-commands.service"));
+require("reflect-metadata");
 dotenv.config();
 /**
  * App Variables

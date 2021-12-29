@@ -7,6 +7,7 @@ import cors from "cors";
 import helmet from "helmet";
 import { appHealthRouter } from './app-health/app-health.router';
 import * as JARVIB from './jarvib-commands/jarvib-commands.service';
+import "reflect-metadata";
 
 dotenv.config();
 /**
