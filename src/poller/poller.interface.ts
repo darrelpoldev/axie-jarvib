@@ -5,5 +5,6 @@ export interface IWorker {
 
 export enum EventTypes {
     TICK = "TICK",
-    DailyReset = "DailyReset"
+    DailyReset = "DailyReset",
+    ReadyForReport = "ReadyForReport"
 }

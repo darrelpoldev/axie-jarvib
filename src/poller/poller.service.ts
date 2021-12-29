@@ -8,7 +8,7 @@ import { selfPing } from "../app-health/app-health.service";
 import { getTotalSLPByRonin } from "../ronin/ronin.service";
 import { Accumulated_SLP, Scholar } from "../scholars/scholars.interface";
 import { addAccumulatedSLP } from "../scholars/scholars.repository";
-import { getScholars, toRoninAddress } from "../scholars/scholars.service";
+import { getDailySLPByRoninAddress, getScholars, toRoninAddress } from "../scholars/scholars.service";
 import { EventTypes, IWorker } from "./poller.interface";
 
 
@@ -69,31 +69,42 @@ export class EventPoller extends EventEmitter implements IWorker {
         this.on(EventTypes.DailyReset, async () => {
             try {
                 const scholars = await getScholars();
-                scholars.forEach(async (scholar: Scholar) => {
-                    const roninAddress = scholar.roninAddress;
-                    const scholarDetails = await getTotalSLPByRonin(roninAddress);
-                    const scholarDetail = scholarDetails.shift();
-                    const accumulated_SLP: Accumulated_SLP = {
-                        id: 0,
-                        roninAddress: await toRoninAddress(scholarDetail["client_id"]),
-                        createdOn: "",
-                        scholarId: 1,
-                        total: scholarDetail["total"]
-                    };
-                    const result = await addAccumulatedSLP(accumulated_SLP);
-                    if (result) {
-                        console.log('Saved.');
-                    }
-                });
+                // scholars.forEach(async (scholar: Scholar) => {
+                //     const roninAddress = scholar.roninAddress;
+                //     const scholarDetails = await getTotalSLPByRonin(roninAddress);
+                //     const scholarDetail = scholarDetails.shift();
+                //     const accumulated_SLP: Accumulated_SLP = {
+                //         id: 0,
+                //         roninAddress: await toRoninAddress(scholarDetail["client_id"]),
+                //         createdOn: "",
+                //         scholarId: 1,
+                //         total: scholarDetail["total"]
+                //     };
+                //     const result = await addAccumulatedSLP(accumulated_SLP);
+                //     if (result) {
+                //         console.log(`Successfully fetched latest record for ${roninAddress}`);
+                //     }
+                // });
+                this.emit(EventTypes.ReadyForReport, scholars);
             } catch (error) {
                 console.log(`Unable to compose daily report...`, error);
             }
 
-            //  Save today's earning (total slp, current MMR, etc.)
             //  Compare to previous day
             //  Notify today's earning of each Scholar
-        })
+        });
 
+        this.on(EventTypes.ReadyForReport, async (scholars: Scholar[]) => {
+            try {
+                scholars.forEach(async (scholar: Scholar) => {
+                    const result = await getDailySLPByRoninAddress(scholar.roninAddress);
+                    console.log(result.rows);
+                });
+            } catch (error) {
+
+            }
+
+        });
     }
 
     stop() {

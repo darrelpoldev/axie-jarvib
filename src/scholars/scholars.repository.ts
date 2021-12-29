@@ -14,12 +14,12 @@ const scholars: Scholar[] = [
     name: "Jampot",
     createdOn: ""
   },
-  // {
-  //   id: 2,
-  //   roninAddress: "ronin:1e9d7412e75d4d89df9102f1bf796d86b0ade73f",
-  //   name: "Ichiman",
-  //   createdOn: ""
-  // }
+  {
+    id: 2,
+    roninAddress: "ronin:1e9d7412e75d4d89df9102f1bf796d86b0ade73f",
+    name: "Ichiman",
+    createdOn: ""
+  }
 ]
 
 /**
@@ -39,6 +39,28 @@ export const getPostgresClient = () => {
 export const listScholars = async (): Promise<Scholar[]> => {
   return scholars;
 }
+
+export const dailySLPByRoninAddress = async (roninAddress: string) => {
+  const psqlClient = getPostgresClient();
+  try {
+    await psqlClient.connect();
+    const result = await psqlClient.query(
+      `
+      SELECT total - lag(total, 1, 0) OVER (ORDER BY created_on) AS DailyResult
+      FROM   accumulated_slp
+      WHERE roninAddress = '${roninAddress}'
+      ORDER  BY "created_on" DESC LIMIT 1;
+      `
+    );
+    return result;
+  } catch (err) {
+    console.log(err);
+    return false;
+  } finally {
+    await psqlClient.end();
+  }
+}
+
 
 export const addAccumulatedSLP = async (accumulated_SLP: Accumulated_SLP) => {
   const psqlClient = getPostgresClient();

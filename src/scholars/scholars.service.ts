@@ -4,7 +4,7 @@
  */
 
 import { Scholar } from "./scholars.interface";
-import { listScholars } from "./scholars.repository";
+import { listScholars, dailySLPByRoninAddress } from "./scholars.repository";
 
 /**
  * Call Repository
@@ -18,6 +18,11 @@ import { listScholars } from "./scholars.repository";
 export const getScholars = async (): Promise<Scholar[]> => {
   const scholars = await listScholars()
   return scholars;
+};
+
+export const getDailySLPByRoninAddress = async (roninAddress: string) => {
+  const result = await dailySLPByRoninAddress(roninAddress);
+  return result;
 };
 
 //  Converts "0x" to "ronin:"
