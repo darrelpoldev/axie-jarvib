@@ -26,11 +26,6 @@ FOREIGN KEY (scholarId) REFERENCES scholars (id));
 INSERT INTO accumulated_SLP(scholarId, roninAddress, total, created_on) VALUES
 (1, 'ronin:55cce35326ba3ae2f27c3976dfbb8aa10d354407', 2300, current_timestamp);
 
-(1, 'ronin:55cce35326ba3ae2f27c3976dfbb8aa10d354407', 2000, current_timestamp);
-(1, 'ronin:55cce35326ba3ae2f27c3976dfbb8aa10d354407', 2075, current_timestamp)
-(1, 'ronin:55cce35326ba3ae2f27c3976dfbb8aa10d354407', 2150, current_timestamp)
-(1, 'ronin:55cce35326ba3ae2f27c3976dfbb8aa10d354407', 2250, current_timestamp);
-
 INSERT INTO accumulated_SLP(scholarId, roninAddress, total, created_on) VALUES
 (2, 'ronin:1e9d7412e75d4d89df9102f1bf796d86b0ade73f', 3375, current_timestamp);
 
@@ -39,6 +34,4 @@ INSERT INTO accumulated_SLP(scholarId, roninAddress, total, created_on) VALUES
 get 2 latest records;
 SELECT * 
 FROM  accumulated_slp
-ORDER  BY "created_on" DESC LIMIT 2;  
-
-
+ORDER  BY "created_on" DESC LIMIT 2;`
