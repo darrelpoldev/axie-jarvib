@@ -8,3 +8,8 @@ export enum EventTypes {
     DailyReset = "DailyReset",
     ReadyForReport = "ReadyForReport"
 }
+
+export interface DailyResult {
+    roninAddress: string,
+    dailySLP: number
+}

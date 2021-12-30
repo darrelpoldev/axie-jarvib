@@ -12,12 +12,14 @@ const scholars: Scholar[] = [
     id: 1,
     roninAddress: "ronin:55cce35326ba3ae2f27c3976dfbb8aa10d354407",
     name: "Jampot",
+    discordId: "250629138862440448",
     createdOn: ""
   },
   {
     id: 2,
     roninAddress: "ronin:1e9d7412e75d4d89df9102f1bf796d86b0ade73f",
     name: "Ichiman",
+    discordId: "543694609159684106",
     createdOn: ""
   }
 ]
@@ -46,7 +48,7 @@ export const dailySLPByRoninAddress = async (roninAddress: string) => {
     await psqlClient.connect();
     const result = await psqlClient.query(
       `
-      SELECT total - lag(total, 1, 0) OVER (ORDER BY created_on) AS DailyResult
+      SELECT total - lag(total, 1, 0) OVER (ORDER BY created_on) AS result
       FROM   accumulated_slp
       WHERE roninAddress = '${roninAddress}'
       ORDER  BY "created_on" DESC LIMIT 1;

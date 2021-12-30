@@ -13,6 +13,7 @@ export interface Scholar {
   id: number,
   roninAddress: string,
   name: string,
+  discordId: string,
   createdOn: string
 }
 

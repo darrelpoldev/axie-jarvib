@@ -13,7 +13,12 @@ const axios = require('axios');
  * Service Methods
  */
 export const getTotalSLPByRonin = async (roninAddress: string) => {
-    if (roninAddress == "") return "";
-    const scholarDetails = await axios.get(`${process.env.roninSLPEndpoint}/${roninAddress}`);
-    return scholarDetails.data;
+    try {
+        if (roninAddress == "") return "";
+        const scholarDetails = await axios.get(`${process.env.roninSLPEndpoint}/${roninAddress}`);
+        return scholarDetails.data;
+    } catch (errorMessage) {
+        console.log(`getTotalSLPByRonin ${errorMessage}`);
+        return false;
+    }
 }

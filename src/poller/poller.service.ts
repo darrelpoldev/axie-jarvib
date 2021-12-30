@@ -9,7 +9,7 @@ import { getTotalSLPByRonin } from "../ronin/ronin.service";
 import { Accumulated_SLP, Scholar } from "../scholars/scholars.interface";
 import { addAccumulatedSLP } from "../scholars/scholars.repository";
 import { getDailySLPByRoninAddress, getScholars, toRoninAddress } from "../scholars/scholars.service";
-import { EventTypes, IWorker } from "./poller.interface";
+import { DailyResult, EventTypes, IWorker } from "./poller.interface";
 
 
 /**
@@ -63,29 +63,43 @@ export class EventPoller extends EventEmitter implements IWorker {
             } catch (error) {
                 console.error(`Error on ${EventTypes.TICK}`, error);
             }
-            //  this.poll(`${process.env.pollingInterval}`);
+            this.poll(`${process.env.pollingInterval}`);
         });
 
         this.on(EventTypes.DailyReset, async () => {
             try {
                 const scholars = await getScholars();
-                // scholars.forEach(async (scholar: Scholar) => {
-                //     const roninAddress = scholar.roninAddress;
-                //     const scholarDetails = await getTotalSLPByRonin(roninAddress);
-                //     const scholarDetail = scholarDetails.shift();
-                //     const accumulated_SLP: Accumulated_SLP = {
-                //         id: 0,
-                //         roninAddress: await toRoninAddress(scholarDetail["client_id"]),
-                //         createdOn: "",
-                //         scholarId: 1,
-                //         total: scholarDetail["total"]
-                //     };
-                //     const result = await addAccumulatedSLP(accumulated_SLP);
-                //     if (result) {
-                //         console.log(`Successfully fetched latest record for ${roninAddress}`);
-                //     }
-                // });
-                this.emit(EventTypes.ReadyForReport, scholars);
+                const collectAccumulatedSLP = new Promise((resolve: any, reject) => {
+                    scholars.forEach(async (scholar: Scholar, index, scholarList) => {
+                        const roninAddress = scholar.roninAddress;
+                        const scholarDetails = await getTotalSLPByRonin(roninAddress);
+                        if (!scholarDetails) return; // This has to be moved or handled somewhere.
+                        const scholarDetail = scholarDetails.shift();
+                        const accumulated_SLP: Accumulated_SLP = {
+                            id: 0,
+                            roninAddress: await toRoninAddress(scholarDetail["client_id"]),
+                            createdOn: "",
+                            scholarId: scholar.id,
+                            total: scholarDetail["total"]
+                        };
+                        const result = await addAccumulatedSLP(accumulated_SLP);
+                        if (result) {
+                            console.log(`Successfully fetched latest record for ${roninAddress}`);
+                        }
+                        if (index === scholarList.length - 1) resolve();
+                    });
+                });
+
+                collectAccumulatedSLP.then(x => {
+                    //  Send message link to summary
+                    console.log(`Completed collecting accumulated SLPs...`);
+                    this.emit(EventTypes.ReadyForReport, scholars);
+                });
+
+                collectAccumulatedSLP.catch(err => {
+                    console.log(`Unable to collect accumulated SLPs. ${err}`);
+                });
+
             } catch (error) {
                 console.log(`Unable to compose daily report...`, error);
             }
@@ -96,10 +110,28 @@ export class EventPoller extends EventEmitter implements IWorker {
 
         this.on(EventTypes.ReadyForReport, async (scholars: Scholar[]) => {
             try {
-                scholars.forEach(async (scholar: Scholar) => {
-                    const result = await getDailySLPByRoninAddress(scholar.roninAddress);
-                    console.log(result.rows);
+                const dailyResults: DailyResult[] = [];
+                const promise = new Promise((resolve: any, reject) => {
+                    scholars.forEach(async (scholar: Scholar, index, scholarList) => {
+                        const result = await getDailySLPByRoninAddress(scholar.roninAddress);
+                        const record = result.rows[0];
+                        const dailyResult: DailyResult = {
+                            dailySLP: record.result,
+                            roninAddress: scholar.roninAddress
+                        };
+                        //  Send message
+                        //  await this.sendMessageToAchievements(`Hey ${this.toDiscordMentionByUserId(scholar.discordId)}. You farmed ${dailyResult.dailySLP} SLPs today.`)
+                        dailyResults.push(dailyResult);
+                        if (index === scholarList.length - 1) resolve();
+                    });
                 });
+
+                promise.then(x => {
+                    //  Send message link to summary
+                    console.log(`Completed today's Report.`);
+                });
+
+
             } catch (error) {
 
             }
@@ -113,6 +145,17 @@ export class EventPoller extends EventEmitter implements IWorker {
 
     poll(interval: string) {
         setTimeout(() => this.emit(EventTypes.TICK), parseInt(`${interval}`));
+    }
+
+    async sendMessageToAchievements(message: string) {
+        const channel = this.discordClient.channels.cache.get(`${process.env.discordChannelId}`);
+        if (channel?.isText()) {
+            channel.send(message);
+        }
+    }
+
+    toDiscordMentionByUserId(discordId: string) {
+        return `<@${discordId}>`
     }
 
 }
