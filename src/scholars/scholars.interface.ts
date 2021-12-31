@@ -11,17 +11,17 @@
 //      -   createdOn
 export interface Scholar {
   id: number,
-  roninAddress: string,
+  roninaddress: string,
   name: string,
-  discordId: string,
+  discordid: string,
   createdOn: string
 }
 
 export interface Accumulated_SLP {
-  id: number,
+  id?: number,
   roninAddress: string,
   scholarId: number,
   total: number,
-  createdOn: string
+  createdOn?: string
 }
 

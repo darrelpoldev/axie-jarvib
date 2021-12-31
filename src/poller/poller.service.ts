@@ -47,7 +47,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                 if (currentHour == hourToNotify && !sent) {
                     const channel = this.discordClient.channels.cache.get('862115684820844544');
                     if (channel?.isText()) {
-                        //  channel.send(`Hey <@&${axieScholarRoleId}>(s) here's your daily reset alert. Brought to you by your BOT police, JARVIB.`);
+                        channel.send(`Hey <@&${axieScholarRoleId}>(s) here's your daily reset alert. Brought to you by your BOT police, JARVIB.`);
                         this.emit(EventTypes.DailyReset);
                     }
                     sent = true;
@@ -69,16 +69,15 @@ export class EventPoller extends EventEmitter implements IWorker {
         this.on(EventTypes.DailyReset, async () => {
             try {
                 const scholars = await getScholars();
+                if (scholars.length == 0) return;
                 const collectAccumulatedSLP = new Promise((resolve: any, reject) => {
                     scholars.forEach(async (scholar: Scholar, index, scholarList) => {
-                        const roninAddress = scholar.roninAddress;
+                        const roninAddress = scholar.roninaddress;
                         const scholarDetails = await getTotalSLPByRonin(roninAddress);
                         if (!scholarDetails) return; // This has to be moved or handled somewhere.
                         const scholarDetail = scholarDetails.shift();
                         const accumulated_SLP: Accumulated_SLP = {
-                            id: 0,
                             roninAddress: await toRoninAddress(scholarDetail["client_id"]),
-                            createdOn: "",
                             scholarId: scholar.id,
                             total: scholarDetail["total"]
                         };
@@ -97,11 +96,13 @@ export class EventPoller extends EventEmitter implements IWorker {
                 });
 
                 collectAccumulatedSLP.catch(err => {
+                    this.sendMessageToAchievements(`I'm failing master. Please check the logs.`);
                     console.log(`Unable to collect accumulated SLPs. ${err}`);
                 });
 
             } catch (error) {
                 console.log(`Unable to compose daily report...`, error);
+                this.sendMessageToAchievements(`I'm failing master. Please check the logs.`);
             }
 
             //  Compare to previous day
@@ -113,14 +114,14 @@ export class EventPoller extends EventEmitter implements IWorker {
                 const dailyResults: DailyResult[] = [];
                 const promise = new Promise((resolve: any, reject) => {
                     scholars.forEach(async (scholar: Scholar, index, scholarList) => {
-                        const result = await getDailySLPByRoninAddress(scholar.roninAddress);
+                        const result = await getDailySLPByRoninAddress(scholar.roninaddress);
                         const record = result.rows[0];
                         const dailyResult: DailyResult = {
                             dailySLP: record.result,
-                            roninAddress: scholar.roninAddress
+                            roninAddress: scholar.roninaddress
                         };
                         //  Send message
-                        //  await this.sendMessageToAchievements(`Hey ${this.toDiscordMentionByUserId(scholar.discordId)}. You farmed ${dailyResult.dailySLP} SLPs today.`)
+                        await this.sendMessageToAchievements(`Hey ${this.toDiscordMentionByUserId(scholar.discordid)}. You farmed ${dailyResult.dailySLP} SLPs today.`)
                         dailyResults.push(dailyResult);
                         if (index === scholarList.length - 1) resolve();
                     });

@@ -7,19 +7,19 @@ const { Client } = require('pg');
 import { Accumulated_SLP, Scholar } from "./scholars.interface";
 
 
-const scholars: Scholar[] = [
+const dummyScholars: Scholar[] = [
   {
     id: 1,
-    roninAddress: "ronin:55cce35326ba3ae2f27c3976dfbb8aa10d354407",
+    roninaddress: "ronin:55cce35326ba3ae2f27c3976dfbb8aa10d354407",
     name: "Jampot",
-    discordId: "250629138862440448",
+    discordid: "250629138862440448",
     createdOn: ""
   },
   {
     id: 2,
-    roninAddress: "ronin:1e9d7412e75d4d89df9102f1bf796d86b0ade73f",
+    roninaddress: "ronin:1e9d7412e75d4d89df9102f1bf796d86b0ade73f",
     name: "Ichiman",
-    discordId: "543694609159684106",
+    discordid: "543694609159684106",
     createdOn: ""
   }
 ]
@@ -39,7 +39,25 @@ export const getPostgresClient = () => {
 }
 
 export const listScholars = async (): Promise<Scholar[]> => {
-  return scholars;
+  let scholars: Scholar[] = [];
+  const psqlClient = getPostgresClient();
+
+  try {
+    await psqlClient.connect();
+    const result = await psqlClient.query(
+      `
+      SELECT * FROM scholars;
+      `
+    );
+    const rows: Scholar[] = <Scholar[]>result.rows;
+    scholars = rows;
+  } catch (err) {
+    console.log(`listScholars ${err}`);
+  }
+  finally {
+    await psqlClient.end();
+    return scholars;
+  }
 }
 
 export const dailySLPByRoninAddress = async (roninAddress: string) => {
@@ -77,12 +95,12 @@ export const addAccumulatedSLP = async (accumulated_SLP: Accumulated_SLP) => {
         accumulated_SLP.total
       ]
     );
-    return true;
   } catch (err) {
     console.log(err);
     return false;
   } finally {
     await psqlClient.end();
+    return true;
   }
 }
 

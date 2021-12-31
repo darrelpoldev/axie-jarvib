@@ -4,6 +4,7 @@ jarvib_db
         -   roninAddress
         -   name
         -   createdOn
+        -   discordId
 
     accumulated_slp
         -   id
