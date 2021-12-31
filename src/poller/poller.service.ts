@@ -9,6 +9,7 @@ import { getTotalSLPByRonin } from "../ronin/ronin.service";
 import { Accumulated_SLP, Scholar } from "../scholars/scholars.interface";
 import { addAccumulatedSLP } from "../scholars/scholars.repository";
 import { getDailySLPByRoninAddress, getScholars, toRoninAddress } from "../scholars/scholars.service";
+import { isProduction } from "../shared/shared.service";
 import { DailyResult, EventTypes, IWorker } from "./poller.interface";
 
 
@@ -47,7 +48,9 @@ export class EventPoller extends EventEmitter implements IWorker {
                 if ((currentHour == hourToNotify || process.env.environment != "prod") && !sent) {
                     const channel = this.discordClient.channels.cache.get('862115684820844544');
                     if (channel?.isText()) {
-                        channel.send(`Hey <@&${axieScholarRoleId}>(s) here's your daily reset alert. Brought to you by your BOT police, JARVIB.`);
+                        if (isProduction()) {
+                            channel.send(`Hey <@&${axieScholarRoleId}>(s) here's your daily reset alert. Brought to you by your BOT police, JARVIB.`);
+                        };
                         this.emit(EventTypes.DailyReset);
                     }
                     sent = true;
@@ -82,7 +85,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                             total: scholarDetail["total"]
                         };
                         //  This needs some refactoring.
-                        const result = process.env.environment != "prod" ? true : await addAccumulatedSLP(accumulated_SLP);
+                        const result = !isProduction() ? true : await addAccumulatedSLP(accumulated_SLP);
                         if (result) {
                             console.log(`Successfully fetched latest record for ${roninAddress}`);
                         }
@@ -150,6 +153,7 @@ export class EventPoller extends EventEmitter implements IWorker {
     }
 
     async sendMessageToAchievements(message: string) {
+        if (!isProduction()) return;
         const channel = this.discordClient.channels.cache.get(`${process.env.discordChannelId}`);
         if (channel?.isText()) {
             channel.send(message);

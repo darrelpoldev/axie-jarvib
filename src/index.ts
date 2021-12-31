@@ -40,6 +40,7 @@ app.use("/api/v1/status", appHealthRouter);
  */
 app.listen(PORT, () => {
   console.log(`SERVICE INFO: Listening on port ${PORT}...`);
+  console.log(`environment: ${process.env.environment}`);
 });
 
 JARVIB.startListening();
