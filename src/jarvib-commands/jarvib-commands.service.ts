@@ -1,4 +1,8 @@
+import { writeToJsonFile } from "../file-system/file-system.service";
 import { EventPoller } from "../poller/poller.service";
+import { getScholars } from "../scholars/scholars.service";
+import { getHost } from "../shared/shared.service";
+import { Commands } from "./jarvib-commands.interfaces";
 
 /**
  * Data Model Interfaces
@@ -48,15 +52,20 @@ export const startListening = async () => {
         engine.start();
     });
 
-    discordClient.on('messageCreate', (message: any) => {
+    discordClient.on('messageCreate', async (message: any) => {
         if (message.author.bot) return;
         if (!message.content.startsWith(`${prefix} `)) return;
         const commandBody = message.content.slice(prefix.length);
         const args = commandBody.split(' ');
         const command = args[1];
         const options = args[2];
-        if (command === "ping") {
+        //  if command empty or help show available commands
+        //  Refactor to avoid spaghetti code.
+        if (command.toUpperCase() === Commands.PING) {
             message.reply(`Hello **${message.author.tag}**. What can I do for you?`);
+        }
+        else if (command.toUpperCase() === Commands.GETSCHOLARS) {
+            message.reply(`Please click the link view the current pool of scholars ${getHost()}/api/v1/scholars`);
         }
     })
 

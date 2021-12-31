@@ -8,6 +8,7 @@ import helmet from "helmet";
 import { appHealthRouter } from './app-health/app-health.router';
 import * as JARVIB from './jarvib-commands/jarvib-commands.service';
 import "reflect-metadata";
+import { scholarsRouter } from "./scholars/scholars.router";
 
 dotenv.config();
 /**
@@ -33,6 +34,7 @@ app.use(express.json());
 // Routes
 //  /api/<version>/resource
 app.use("/api/v1/status", appHealthRouter);
+app.use("/api/v1/scholars", scholarsRouter);
 //  app.use("/api/v2/status", appHealthV2Router); -- versioning
 
 /**
