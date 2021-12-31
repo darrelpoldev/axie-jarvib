@@ -44,7 +44,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                 const utcDate = new Date();
                 const localDateTime = new Date(utcDate.toString());
                 const currentHour = localDateTime.getHours();
-                if (currentHour == hourToNotify && !sent) {
+                if ((currentHour == hourToNotify || process.env.environment != "prod") && !sent) {
                     const channel = this.discordClient.channels.cache.get('862115684820844544');
                     if (channel?.isText()) {
                         channel.send(`Hey <@&${axieScholarRoleId}>(s) here's your daily reset alert. Brought to you by your BOT police, JARVIB.`);
@@ -81,7 +81,8 @@ export class EventPoller extends EventEmitter implements IWorker {
                             scholarId: scholar.id,
                             total: scholarDetail["total"]
                         };
-                        const result = await addAccumulatedSLP(accumulated_SLP);
+                        //  This needs some refactoring.
+                        const result = process.env.environment != "prod" ? true : await addAccumulatedSLP(accumulated_SLP);
                         if (result) {
                             console.log(`Successfully fetched latest record for ${roninAddress}`);
                         }
