@@ -1,4 +1,8 @@
 "use strict";
+/**
+ * Data Model Interfaces
+ * Libraries
+ */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -36,42 +40,42 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.selfPing = exports.v1 = void 0;
-var app_health_interfaces_1 = require("./app-health.interfaces");
-var axios = require('axios');
+exports.toRoninAddress = exports.getDailySLPByRoninAddress = exports.getScholars = void 0;
+var scholars_repository_1 = require("./scholars.repository");
 /**
  * Call Repository
  */
 /**
  * Service Methods
  */
-var v1 = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var appHealthStatus;
-    return __generator(this, function (_a) {
-        appHealthStatus = {
-            status: app_health_interfaces_1.AppHealthStatus.GREEN,
-            currentVersion: "v" + process.env.appVersion
-        };
-        return [2 /*return*/, appHealthStatus];
-    });
-}); };
-exports.v1 = v1;
-var selfPing = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var url, config, result;
+var getScholars = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var scholars;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0:
-                url = "" + process.env.healthCheckEndpoint;
-                config = {
-                    method: 'GET',
-                    url: url
-                };
-                return [4 /*yield*/, axios(config)];
+            case 0: return [4 /*yield*/, scholars_repository_1.listScholars()];
             case 1:
-                result = _a.sent();
-                console.log(result.data);
-                return [2 /*return*/];
+                scholars = _a.sent();
+                return [2 /*return*/, scholars];
         }
     });
 }); };
-exports.selfPing = selfPing;
+exports.getScholars = getScholars;
+var getDailySLPByRoninAddress = function (roninAddress) { return __awaiter(void 0, void 0, void 0, function () {
+    var result;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, scholars_repository_1.dailySLPByRoninAddress(roninAddress)];
+            case 1:
+                result = _a.sent();
+                return [2 /*return*/, result];
+        }
+    });
+}); };
+exports.getDailySLPByRoninAddress = getDailySLPByRoninAddress;
+//  Converts "0x" to "ronin:"
+var toRoninAddress = function (clientId) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        return [2 /*return*/, clientId.replace(/^.{2}/g, 'ronin:')];
+    });
+}); };
+exports.toRoninAddress = toRoninAddress;

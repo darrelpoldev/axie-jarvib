@@ -2,8 +2,9 @@
  * Data Model Interfaces
  * Libraries
  */
- import { AppHealth, AppHealthStatus } from './app-health.interfaces';
-
+import { url } from 'inspector';
+import { AppHealth, AppHealthStatus } from './app-health.interfaces';
+const axios = require('axios');
 
 /**
  * Call Repository
@@ -20,4 +21,15 @@ export const v1 = async (): Promise<AppHealth> => {
     currentVersion: `v${process.env.appVersion}`
   };
   return appHealthStatus;
+}
+
+export const selfPing = async () => {
+  const url = `${process.env.healthCheckEndpoint}`;
+  const config = {
+    method: 'GET',
+    url: url
+  };
+
+  let result = await axios(config);
+  console.log(result.data);
 }

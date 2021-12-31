@@ -36,42 +36,35 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.selfPing = exports.v1 = void 0;
-var app_health_interfaces_1 = require("./app-health.interfaces");
-var axios = require('axios');
+exports.writeToJsonFile = void 0;
+/**
+ * Data Model Interfaces
+ * Libraries
+ */
+var fs = require('fs');
 /**
  * Call Repository
  */
 /**
  * Service Methods
  */
-var v1 = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var appHealthStatus;
+var writeToJsonFile = function (content, filename) { return __awaiter(void 0, void 0, void 0, function () {
+    var jsonString;
     return __generator(this, function (_a) {
-        appHealthStatus = {
-            status: app_health_interfaces_1.AppHealthStatus.GREEN,
-            currentVersion: "v" + process.env.appVersion
-        };
-        return [2 /*return*/, appHealthStatus];
-    });
-}); };
-exports.v1 = v1;
-var selfPing = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var url, config, result;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                url = "" + process.env.healthCheckEndpoint;
-                config = {
-                    method: 'GET',
-                    url: url
-                };
-                return [4 /*yield*/, axios(config)];
-            case 1:
-                result = _a.sent();
-                console.log(result.data);
-                return [2 /*return*/];
+        try {
+            jsonString = JSON.stringify(content);
+            fs.writeFile(filename, jsonString, 'utf8', function (err) {
+                if (err)
+                    throw err;
+                console.log('Successfully captured list of scholars to json file.');
+            });
+            return [2 /*return*/, true];
         }
+        catch (error) {
+            console.log("writeToJsonFile " + error);
+            return [2 /*return*/, false];
+        }
+        return [2 /*return*/];
     });
 }); };
-exports.selfPing = selfPing;
+exports.writeToJsonFile = writeToJsonFile;

@@ -1,4 +1,23 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -35,43 +54,44 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.selfPing = exports.v1 = void 0;
-var app_health_interfaces_1 = require("./app-health.interfaces");
-var axios = require('axios');
+exports.scholarsRouter = void 0;
 /**
- * Call Repository
+ * Required External Modules and Interfaces
  */
+var express_1 = __importDefault(require("express"));
+var ScholarService = __importStar(require("./scholars.service"));
 /**
- * Service Methods
+ * Router Definition
  */
-var v1 = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var appHealthStatus;
-    return __generator(this, function (_a) {
-        appHealthStatus = {
-            status: app_health_interfaces_1.AppHealthStatus.GREEN,
-            currentVersion: "v" + process.env.appVersion
-        };
-        return [2 /*return*/, appHealthStatus];
-    });
-}); };
-exports.v1 = v1;
-var selfPing = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var url, config, result;
+exports.scholarsRouter = express_1.default.Router();
+/**
+ * Controller Definitions
+ */
+// GET app-health
+exports.scholarsRouter.get(["/"], function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var scholars, e_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                url = "" + process.env.healthCheckEndpoint;
-                config = {
-                    method: 'GET',
-                    url: url
-                };
-                return [4 /*yield*/, axios(config)];
+                _a.trys.push([0, 2, , 3]);
+                return [4 /*yield*/, ScholarService.getScholars()];
             case 1:
-                result = _a.sent();
-                console.log(result.data);
-                return [2 /*return*/];
+                scholars = _a.sent();
+                res.status(200).send(scholars);
+                return [3 /*break*/, 3];
+            case 2:
+                e_1 = _a.sent();
+                res.status(500).send(e_1.message);
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
         }
     });
-}); };
-exports.selfPing = selfPing;
+}); });
+// GET <resource>:id
+// POST <resource>
+// PUT <resource>/:id
+// DELETE <resource>/:id

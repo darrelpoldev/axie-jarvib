@@ -36,8 +36,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.selfPing = exports.v1 = void 0;
-var app_health_interfaces_1 = require("./app-health.interfaces");
+exports.getMMRbyRoninAddress = exports.getTotalSLPByRonin = void 0;
+/**
+ * Data Model Interfaces
+ * Libraries
+ */
 var axios = require('axios');
 /**
  * Call Repository
@@ -45,33 +48,62 @@ var axios = require('axios');
 /**
  * Service Methods
  */
-var v1 = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var appHealthStatus;
-    return __generator(this, function (_a) {
-        appHealthStatus = {
-            status: app_health_interfaces_1.AppHealthStatus.GREEN,
-            currentVersion: "v" + process.env.appVersion
-        };
-        return [2 /*return*/, appHealthStatus];
-    });
-}); };
-exports.v1 = v1;
-var selfPing = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var url, config, result;
+var getTotalSLPByRonin = function (roninAddress) { return __awaiter(void 0, void 0, void 0, function () {
+    var scholarDetails, errorMessage_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                url = "" + process.env.healthCheckEndpoint;
-                config = {
-                    method: 'GET',
-                    url: url
-                };
-                return [4 /*yield*/, axios(config)];
+                _a.trys.push([0, 2, , 3]);
+                if (roninAddress == "")
+                    return [2 /*return*/, ""];
+                return [4 /*yield*/, axios.get(process.env.roninSLPEndpoint + "/" + roninAddress)];
             case 1:
-                result = _a.sent();
-                console.log(result.data);
-                return [2 /*return*/];
+                scholarDetails = _a.sent();
+                return [2 /*return*/, scholarDetails.data];
+            case 2:
+                errorMessage_1 = _a.sent();
+                console.log("getTotalSLPByRonin " + errorMessage_1);
+                return [2 /*return*/, false];
+            case 3: return [2 /*return*/];
         }
     });
 }); };
-exports.selfPing = selfPing;
+exports.getTotalSLPByRonin = getTotalSLPByRonin;
+var getMMRbyRoninAddress = function (roninAddress) { return __awaiter(void 0, void 0, void 0, function () {
+    var result, response, items, data, mmrDetails, MMR, errorMessage_2;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                result = {
+                    ELO: 0,
+                    rank: 0
+                };
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 3, 4, 5]);
+                if (roninAddress == "")
+                    return [2 /*return*/, result];
+                return [4 /*yield*/, axios.get(process.env.roninMMREndpoint + "/" + roninAddress)];
+            case 2:
+                response = _a.sent();
+                items = response.data[0]["items"];
+                data = items !== undefined ? items : [];
+                if (data.length == 0)
+                    return [2 /*return*/, result];
+                mmrDetails = data[1];
+                MMR = {
+                    ELO: mmrDetails["elo"],
+                    rank: mmrDetails["rank"]
+                };
+                result = MMR;
+                return [3 /*break*/, 5];
+            case 3:
+                errorMessage_2 = _a.sent();
+                console.log("getTotalSLPByRonin " + errorMessage_2);
+                return [3 /*break*/, 5];
+            case 4: return [2 /*return*/, result];
+            case 5: return [2 /*return*/];
+        }
+    });
+}); };
+exports.getMMRbyRoninAddress = getMMRbyRoninAddress;
