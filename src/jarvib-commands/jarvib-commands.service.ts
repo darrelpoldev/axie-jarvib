@@ -1,5 +1,7 @@
 import { writeToJsonFile } from "../file-system/file-system.service";
 import { EventPoller } from "../poller/poller.service";
+import { MMR } from "../ronin/ronin.interfaces";
+import { getMMRbyRoninAddress } from "../ronin/ronin.service";
 import { getScholars } from "../scholars/scholars.service";
 import { getHost } from "../shared/shared.service";
 import { Commands } from "./jarvib-commands.interfaces";
@@ -66,6 +68,16 @@ export const startListening = async () => {
         }
         else if (command.toUpperCase() === Commands.GETSCHOLARS) {
             message.reply(`Please click the link view the current pool of scholars ${getHost()}/api/v1/scholars`);
+        }
+        else if (command.toUpperCase() === Commands.GETMMR) {
+            const roninAddress = options;
+            if (roninAddress === undefined || roninAddress === "") message.reply(`Please provide ronin address`);
+            const mmrDetails: MMR = await getMMRbyRoninAddress(roninAddress);
+            if (!mmrDetails) message.reply(`Unable to fetch MMR details`);
+            message.reply(`Your current MMR is ${mmrDetails.ELO} and your current ranking is ${mmrDetails.rank}`);
+        }
+        else {
+            message.reply(`The fvck are you saying?`);
         }
     })
 

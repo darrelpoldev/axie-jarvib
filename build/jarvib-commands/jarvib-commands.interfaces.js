@@ -5,4 +5,5 @@ var Commands;
 (function (Commands) {
     Commands["PING"] = "PING";
     Commands["GETSCHOLARS"] = "GETSCHOLARS";
+    Commands["GETMMR"] = "GETMMR";
 })(Commands = exports.Commands || (exports.Commands = {}));

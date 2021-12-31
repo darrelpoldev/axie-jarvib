@@ -1,4 +1,5 @@
 export enum Commands {
   PING = "PING",
-  GETSCHOLARS = "GETSCHOLARS"
+  GETSCHOLARS = "GETSCHOLARS",
+  GETMMR = "GETMMR"
 }

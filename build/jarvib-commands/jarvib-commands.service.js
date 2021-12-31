@@ -38,6 +38,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.startListening = exports.setUpCommands = void 0;
 var poller_service_1 = require("../poller/poller.service");
+var ronin_service_1 = require("../ronin/ronin.service");
 var shared_service_1 = require("../shared/shared.service");
 var jarvib_commands_interfaces_1 = require("./jarvib-commands.interfaces");
 /**
@@ -90,25 +91,42 @@ var startListening = function () { return __awaiter(void 0, void 0, void 0, func
             engine.start();
         });
         discordClient.on('messageCreate', function (message) { return __awaiter(void 0, void 0, void 0, function () {
-            var commandBody, args, command, options;
+            var commandBody, args, command, options, roninAddress, mmrDetails;
             return __generator(this, function (_a) {
-                if (message.author.bot)
-                    return [2 /*return*/];
-                if (!message.content.startsWith(prefix + " "))
-                    return [2 /*return*/];
-                commandBody = message.content.slice(prefix.length);
-                args = commandBody.split(' ');
-                command = args[1];
-                options = args[2];
-                //  if command empty or help show available commands
-                //  Refactor to avoid spaghetti code.
-                if (command.toUpperCase() === jarvib_commands_interfaces_1.Commands.PING) {
-                    message.reply("Hello **" + message.author.tag + "**. What can I do for you?");
+                switch (_a.label) {
+                    case 0:
+                        if (message.author.bot)
+                            return [2 /*return*/];
+                        if (!message.content.startsWith(prefix + " "))
+                            return [2 /*return*/];
+                        commandBody = message.content.slice(prefix.length);
+                        args = commandBody.split(' ');
+                        command = args[1];
+                        options = args[2];
+                        if (!(command.toUpperCase() === jarvib_commands_interfaces_1.Commands.PING)) return [3 /*break*/, 1];
+                        message.reply("Hello **" + message.author.tag + "**. What can I do for you?");
+                        return [3 /*break*/, 5];
+                    case 1:
+                        if (!(command.toUpperCase() === jarvib_commands_interfaces_1.Commands.GETSCHOLARS)) return [3 /*break*/, 2];
+                        message.reply("Please click the link view the current pool of scholars " + shared_service_1.getHost() + "/api/v1/scholars");
+                        return [3 /*break*/, 5];
+                    case 2:
+                        if (!(command.toUpperCase() === jarvib_commands_interfaces_1.Commands.GETMMR)) return [3 /*break*/, 4];
+                        roninAddress = options;
+                        if (roninAddress === undefined || roninAddress === "")
+                            message.reply("Please provide ronin address");
+                        return [4 /*yield*/, ronin_service_1.getMMRbyRoninAddress(roninAddress)];
+                    case 3:
+                        mmrDetails = _a.sent();
+                        if (!mmrDetails)
+                            message.reply("Unable to fetch MMR details");
+                        message.reply("Your current MMR is " + mmrDetails.ELO + " and your current ranking is " + mmrDetails.rank);
+                        return [3 /*break*/, 5];
+                    case 4:
+                        message.reply("The fvck are you saying?");
+                        _a.label = 5;
+                    case 5: return [2 /*return*/];
                 }
-                else if (command.toUpperCase() === jarvib_commands_interfaces_1.Commands.GETSCHOLARS) {
-                    message.reply("Please click the link view the current pool of scholars " + shared_service_1.getHost() + "/api/v1/scholars");
-                }
-                return [2 /*return*/];
             });
         }); });
         discordClient.login(process.env.discordToken);

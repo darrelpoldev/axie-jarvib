@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTotalSLPByRonin = void 0;
+exports.getMMRbyRoninAddress = exports.getTotalSLPByRonin = void 0;
 /**
  * Data Model Interfaces
  * Libraries
@@ -69,3 +69,41 @@ var getTotalSLPByRonin = function (roninAddress) { return __awaiter(void 0, void
     });
 }); };
 exports.getTotalSLPByRonin = getTotalSLPByRonin;
+var getMMRbyRoninAddress = function (roninAddress) { return __awaiter(void 0, void 0, void 0, function () {
+    var result, response, items, data, mmrDetails, MMR, errorMessage_2;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                result = {
+                    ELO: 0,
+                    rank: 0
+                };
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 3, 4, 5]);
+                if (roninAddress == "")
+                    return [2 /*return*/, result];
+                return [4 /*yield*/, axios.get(process.env.roninMMREndpoint + "/" + roninAddress)];
+            case 2:
+                response = _a.sent();
+                items = response.data[0]["items"];
+                data = items !== undefined ? items : [];
+                if (data.length == 0)
+                    return [2 /*return*/, result];
+                mmrDetails = data[1];
+                MMR = {
+                    ELO: mmrDetails["elo"],
+                    rank: mmrDetails["rank"]
+                };
+                result = MMR;
+                return [3 /*break*/, 5];
+            case 3:
+                errorMessage_2 = _a.sent();
+                console.log("getTotalSLPByRonin " + errorMessage_2);
+                return [3 /*break*/, 5];
+            case 4: return [2 /*return*/, result];
+            case 5: return [2 /*return*/];
+        }
+    });
+}); };
+exports.getMMRbyRoninAddress = getMMRbyRoninAddress;
