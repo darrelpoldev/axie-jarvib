@@ -4,7 +4,7 @@ import { MMR } from "../ronin/ronin.interfaces";
 import { getMMRbyRoninAddress } from "../ronin/ronin.service";
 import { getScholars } from "../scholars/scholars.service";
 import { getHost } from "../shared/shared.service";
-import { Commands } from "./jarvib-commands.interfaces";
+import { Commands, help } from "./jarvib-commands.interfaces";
 
 /**
  * Data Model Interfaces
@@ -61,7 +61,13 @@ export const startListening = async () => {
         const args = commandBody.split(' ');
         const command = args[1];
         const options = args[2];
+
         //  if command empty or help show available commands
+        if (command === undefined || command === "help") {
+            message.reply(help);
+            return;
+        }
+
         //  Refactor to avoid spaghetti code.
         if (command.toUpperCase() === Commands.PING) {
             message.reply(`Hello **${message.author.tag}**. What can I do for you?`);
