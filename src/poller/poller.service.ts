@@ -138,9 +138,8 @@ export class EventPoller extends EventEmitter implements IWorker {
 
 
             } catch (error) {
-
+                console.log(`EventTypes.ReadyForReport ${error}`);
             }
-
         });
     }
 
