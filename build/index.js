@@ -32,6 +32,7 @@ var helmet_1 = __importDefault(require("helmet"));
 var app_health_router_1 = require("./app-health/app-health.router");
 var JARVIB = __importStar(require("./jarvib-commands/jarvib-commands.service"));
 require("reflect-metadata");
+var scholars_router_1 = require("./scholars/scholars.router");
 dotenv.config();
 /**
  * App Variables
@@ -51,11 +52,13 @@ app.use(express_1.default.json());
 // Routes
 //  /api/<version>/resource
 app.use("/api/v1/status", app_health_router_1.appHealthRouter);
+app.use("/api/v1/scholars", scholars_router_1.scholarsRouter);
 //  app.use("/api/v2/status", appHealthV2Router); -- versioning
 /**
  * Server Activation
  */
 app.listen(PORT, function () {
     console.log("SERVICE INFO: Listening on port " + PORT + "...");
+    console.log("environment: " + process.env.environment);
 });
 JARVIB.startListening();

@@ -49,16 +49,22 @@ var axios = require('axios');
  * Service Methods
  */
 var getTotalSLPByRonin = function (roninAddress) { return __awaiter(void 0, void 0, void 0, function () {
-    var scholarDetails;
+    var scholarDetails, errorMessage_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
+                _a.trys.push([0, 2, , 3]);
                 if (roninAddress == "")
                     return [2 /*return*/, ""];
                 return [4 /*yield*/, axios.get(process.env.roninSLPEndpoint + "/" + roninAddress)];
             case 1:
                 scholarDetails = _a.sent();
                 return [2 /*return*/, scholarDetails.data];
+            case 2:
+                errorMessage_1 = _a.sent();
+                console.log("getTotalSLPByRonin " + errorMessage_1);
+                return [2 /*return*/, false];
+            case 3: return [2 /*return*/];
         }
     });
 }); };

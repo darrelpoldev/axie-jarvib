@@ -5,4 +5,5 @@ var EventTypes;
 (function (EventTypes) {
     EventTypes["TICK"] = "TICK";
     EventTypes["DailyReset"] = "DailyReset";
+    EventTypes["ReadyForReport"] = "ReadyForReport";
 })(EventTypes = exports.EventTypes || (exports.EventTypes = {}));

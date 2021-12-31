@@ -1,8 +1,4 @@
 "use strict";
-/**
- * Data Model Interfaces
- * Libraries
- */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -40,42 +36,35 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toRoninAddress = exports.getDailySLPByRoninAddress = exports.getScholars = void 0;
-var scholars_repository_1 = require("./scholars.repository");
+exports.writeToJsonFile = void 0;
+/**
+ * Data Model Interfaces
+ * Libraries
+ */
+var fs = require('fs');
 /**
  * Call Repository
  */
 /**
  * Service Methods
  */
-var getScholars = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var scholars;
+var writeToJsonFile = function (content, filename) { return __awaiter(void 0, void 0, void 0, function () {
+    var jsonString;
     return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, scholars_repository_1.listScholars()];
-            case 1:
-                scholars = _a.sent();
-                return [2 /*return*/, scholars];
+        try {
+            jsonString = JSON.stringify(content);
+            fs.writeFile(filename, jsonString, 'utf8', function (err) {
+                if (err)
+                    throw err;
+                console.log('Successfully captured list of scholars to json file.');
+            });
+            return [2 /*return*/, true];
         }
-    });
-}); };
-exports.getScholars = getScholars;
-var getDailySLPByRoninAddress = function (roninAddress) { return __awaiter(void 0, void 0, void 0, function () {
-    var result;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, scholars_repository_1.dailySLPByRoninAddress(roninAddress)];
-            case 1:
-                result = _a.sent();
-                return [2 /*return*/, result];
+        catch (error) {
+            console.log("writeToJsonFile " + error);
+            return [2 /*return*/, false];
         }
+        return [2 /*return*/];
     });
 }); };
-exports.getDailySLPByRoninAddress = getDailySLPByRoninAddress;
-//  Converts "0x" to "ronin:"
-var toRoninAddress = function (clientId) { return __awaiter(void 0, void 0, void 0, function () {
-    return __generator(this, function (_a) {
-        return [2 /*return*/, clientId.replace(/^.{2}/g, 'ronin:')];
-    });
-}); };
-exports.toRoninAddress = toRoninAddress;
+exports.writeToJsonFile = writeToJsonFile;

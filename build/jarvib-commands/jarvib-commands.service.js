@@ -38,6 +38,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.startListening = exports.setUpCommands = void 0;
 var poller_service_1 = require("../poller/poller.service");
+var shared_service_1 = require("../shared/shared.service");
+var jarvib_commands_interfaces_1 = require("./jarvib-commands.interfaces");
 /**
  * Data Model Interfaces
  * Libraries
@@ -87,19 +89,28 @@ var startListening = function () { return __awaiter(void 0, void 0, void 0, func
             var engine = new poller_service_1.EventPoller(discordClient);
             engine.start();
         });
-        discordClient.on('messageCreate', function (message) {
-            if (message.author.bot)
-                return;
-            if (!message.content.startsWith(prefix + " "))
-                return;
-            var commandBody = message.content.slice(prefix.length);
-            var args = commandBody.split(' ');
-            var command = args[1];
-            var options = args[2];
-            if (command === "ping") {
-                message.reply("Hello **" + message.author.tag + "**. What can I do for you?");
-            }
-        });
+        discordClient.on('messageCreate', function (message) { return __awaiter(void 0, void 0, void 0, function () {
+            var commandBody, args, command, options;
+            return __generator(this, function (_a) {
+                if (message.author.bot)
+                    return [2 /*return*/];
+                if (!message.content.startsWith(prefix + " "))
+                    return [2 /*return*/];
+                commandBody = message.content.slice(prefix.length);
+                args = commandBody.split(' ');
+                command = args[1];
+                options = args[2];
+                //  if command empty or help show available commands
+                //  Refactor to avoid spaghetti code.
+                if (command.toUpperCase() === jarvib_commands_interfaces_1.Commands.PING) {
+                    message.reply("Hello **" + message.author.tag + "**. What can I do for you?");
+                }
+                else if (command.toUpperCase() === jarvib_commands_interfaces_1.Commands.GETSCHOLARS) {
+                    message.reply("Please click the link view the current pool of scholars " + shared_service_1.getHost() + "/api/v1/scholars");
+                }
+                return [2 /*return*/];
+            });
+        }); });
         discordClient.login(process.env.discordToken);
         return [2 /*return*/];
     });

@@ -62,6 +62,7 @@ var app_health_service_1 = require("../app-health/app-health.service");
 var ronin_service_1 = require("../ronin/ronin.service");
 var scholars_repository_1 = require("../scholars/scholars.repository");
 var scholars_service_1 = require("../scholars/scholars.service");
+var shared_service_1 = require("../shared/shared.service");
 var poller_interface_1 = require("./poller.interface");
 /**
  * Call Repository
@@ -99,10 +100,13 @@ var EventPoller = /** @class */ (function (_super) {
                             utcDate = new Date();
                             localDateTime = new Date(utcDate.toString());
                             currentHour = localDateTime.getHours();
-                            if (currentHour == hourToNotify && !sent) {
+                            if ((currentHour == hourToNotify || process.env.environment != "prod") && !sent) {
                                 channel = this.discordClient.channels.cache.get('862115684820844544');
                                 if (channel === null || channel === void 0 ? void 0 : channel.isText()) {
-                                    //  channel.send(`Hey <@&${axieScholarRoleId}>(s) here's your daily reset alert. Brought to you by your BOT police, JARVIB.`);
+                                    if (shared_service_1.isProduction()) {
+                                        channel.send("Hey <@&" + axieScholarRoleId + ">(s) here's your daily reset alert. Brought to you by your BOT police, JARVIB.");
+                                    }
+                                    ;
                                     this.emit(poller_interface_1.EventTypes.DailyReset);
                                 }
                                 sent = true;
@@ -119,11 +123,12 @@ var EventPoller = /** @class */ (function (_super) {
                         catch (error) {
                             console.error("Error on " + poller_interface_1.EventTypes.TICK, error);
                         }
+                        this.poll("" + process.env.pollingInterval);
                         return [2 /*return*/];
                     });
                 }); });
                 this.on(poller_interface_1.EventTypes.DailyReset, function () { return __awaiter(_this, void 0, void 0, function () {
-                    var scholars, error_1;
+                    var scholars_1, collectAccumulatedSLP, error_1;
                     var _this = this;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
@@ -131,45 +136,109 @@ var EventPoller = /** @class */ (function (_super) {
                                 _a.trys.push([0, 2, , 3]);
                                 return [4 /*yield*/, scholars_service_1.getScholars()];
                             case 1:
-                                scholars = _a.sent();
-                                scholars.forEach(function (scholar) { return __awaiter(_this, void 0, void 0, function () {
-                                    var roninAddress, scholarDetails, scholarDetail, accumulated_SLP, result;
-                                    var _a;
-                                    return __generator(this, function (_b) {
-                                        switch (_b.label) {
-                                            case 0:
-                                                roninAddress = scholar.roninAddress;
-                                                return [4 /*yield*/, ronin_service_1.getTotalSLPByRonin(roninAddress)];
-                                            case 1:
-                                                scholarDetails = _b.sent();
-                                                scholarDetail = scholarDetails.shift();
-                                                _a = {
-                                                    id: 0
-                                                };
-                                                return [4 /*yield*/, scholars_service_1.toRoninAddress(scholarDetail["client_id"])];
-                                            case 2:
-                                                accumulated_SLP = (_a.roninAddress = _b.sent(),
-                                                    _a.createdOn = "",
-                                                    _a.scholarId = 1,
-                                                    _a.total = scholarDetail["total"],
-                                                    _a);
-                                                return [4 /*yield*/, scholars_repository_1.addAccumulatedSLP(accumulated_SLP)];
-                                            case 3:
-                                                result = _b.sent();
-                                                if (result) {
-                                                    console.log('Saved.');
-                                                }
-                                                return [2 /*return*/];
-                                        }
-                                    });
-                                }); });
+                                scholars_1 = _a.sent();
+                                if (scholars_1.length == 0)
+                                    return [2 /*return*/];
+                                collectAccumulatedSLP = new Promise(function (resolve, reject) {
+                                    scholars_1.forEach(function (scholar, index, scholarList) { return __awaiter(_this, void 0, void 0, function () {
+                                        var roninAddress, scholarDetails, scholarDetail, accumulated_SLP, result, _a;
+                                        var _b;
+                                        return __generator(this, function (_c) {
+                                            switch (_c.label) {
+                                                case 0:
+                                                    roninAddress = scholar.roninaddress;
+                                                    return [4 /*yield*/, ronin_service_1.getTotalSLPByRonin(roninAddress)];
+                                                case 1:
+                                                    scholarDetails = _c.sent();
+                                                    if (!scholarDetails)
+                                                        return [2 /*return*/]; // This has to be moved or handled somewhere.
+                                                    scholarDetail = scholarDetails.shift();
+                                                    _b = {};
+                                                    return [4 /*yield*/, scholars_service_1.toRoninAddress(scholarDetail["client_id"])];
+                                                case 2:
+                                                    accumulated_SLP = (_b.roninAddress = _c.sent(),
+                                                        _b.scholarId = scholar.id,
+                                                        _b.total = scholarDetail["total"],
+                                                        _b);
+                                                    if (!!shared_service_1.isProduction()) return [3 /*break*/, 3];
+                                                    _a = true;
+                                                    return [3 /*break*/, 5];
+                                                case 3: return [4 /*yield*/, scholars_repository_1.addAccumulatedSLP(accumulated_SLP)];
+                                                case 4:
+                                                    _a = _c.sent();
+                                                    _c.label = 5;
+                                                case 5:
+                                                    result = _a;
+                                                    if (result) {
+                                                        console.log("Successfully fetched latest record for " + roninAddress);
+                                                    }
+                                                    if (index === scholarList.length - 1)
+                                                        resolve();
+                                                    return [2 /*return*/];
+                                            }
+                                        });
+                                    }); });
+                                });
+                                collectAccumulatedSLP.then(function (x) {
+                                    //  Send message link to summary
+                                    console.log("Completed collecting accumulated SLPs...");
+                                    _this.emit(poller_interface_1.EventTypes.ReadyForReport, scholars_1);
+                                });
+                                collectAccumulatedSLP.catch(function (err) {
+                                    _this.sendMessageToAchievements("I'm failing master. Please check the logs.");
+                                    console.log("Unable to collect accumulated SLPs. " + err);
+                                });
                                 return [3 /*break*/, 3];
                             case 2:
                                 error_1 = _a.sent();
                                 console.log("Unable to compose daily report...", error_1);
+                                this.sendMessageToAchievements("I'm failing master. Please check the logs.");
                                 return [3 /*break*/, 3];
                             case 3: return [2 /*return*/];
                         }
+                    });
+                }); });
+                this.on(poller_interface_1.EventTypes.ReadyForReport, function (scholars) { return __awaiter(_this, void 0, void 0, function () {
+                    var dailyResults_1, promise;
+                    var _this = this;
+                    return __generator(this, function (_a) {
+                        try {
+                            dailyResults_1 = [];
+                            promise = new Promise(function (resolve, reject) {
+                                scholars.forEach(function (scholar, index, scholarList) { return __awaiter(_this, void 0, void 0, function () {
+                                    var result, record, dailyResult;
+                                    return __generator(this, function (_a) {
+                                        switch (_a.label) {
+                                            case 0: return [4 /*yield*/, scholars_service_1.getDailySLPByRoninAddress(scholar.roninaddress)];
+                                            case 1:
+                                                result = _a.sent();
+                                                record = result.rows[0];
+                                                dailyResult = {
+                                                    dailySLP: record.result,
+                                                    roninAddress: scholar.roninaddress
+                                                };
+                                                //  Send message
+                                                return [4 /*yield*/, this.sendMessageToAchievements("Hey " + this.toDiscordMentionByUserId(scholar.discordid) + ". You farmed " + dailyResult.dailySLP + " SLPs today.")];
+                                            case 2:
+                                                //  Send message
+                                                _a.sent();
+                                                dailyResults_1.push(dailyResult);
+                                                if (index === scholarList.length - 1)
+                                                    resolve();
+                                                return [2 /*return*/];
+                                        }
+                                    });
+                                }); });
+                            });
+                            promise.then(function (x) {
+                                //  Send message link to summary
+                                console.log("Completed today's Report.");
+                            });
+                        }
+                        catch (error) {
+                            console.log("EventTypes.ReadyForReport " + error);
+                        }
+                        return [2 /*return*/];
                     });
                 }); });
                 return [2 /*return*/];
@@ -182,6 +251,23 @@ var EventPoller = /** @class */ (function (_super) {
     EventPoller.prototype.poll = function (interval) {
         var _this = this;
         setTimeout(function () { return _this.emit(poller_interface_1.EventTypes.TICK); }, parseInt("" + interval));
+    };
+    EventPoller.prototype.sendMessageToAchievements = function (message) {
+        return __awaiter(this, void 0, void 0, function () {
+            var channel;
+            return __generator(this, function (_a) {
+                if (!shared_service_1.isProduction())
+                    return [2 /*return*/];
+                channel = this.discordClient.channels.cache.get("" + process.env.discordChannelId);
+                if (channel === null || channel === void 0 ? void 0 : channel.isText()) {
+                    channel.send(message);
+                }
+                return [2 /*return*/];
+            });
+        });
+    };
+    EventPoller.prototype.toDiscordMentionByUserId = function (discordId) {
+        return "<@" + discordId + ">";
     };
     return EventPoller;
 }(events_1.EventEmitter));

@@ -36,25 +36,27 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addAccumulatedSLP = exports.listScholars = exports.getPostgresClient = void 0;
+exports.addAccumulatedSLP = exports.dailySLPByRoninAddress = exports.listScholars = exports.getPostgresClient = void 0;
 /**
  * Data Model Interfaces
  * Libraries
  */
 var Client = require('pg').Client;
-var scholars = [
+var dummyScholars = [
     {
         id: 1,
-        roninAddress: "ronin:55cce35326ba3ae2f27c3976dfbb8aa10d354407",
+        roninaddress: "ronin:55cce35326ba3ae2f27c3976dfbb8aa10d354407",
         name: "Jampot",
+        discordid: "250629138862440448",
         createdOn: ""
     },
-    // {
-    //   id: 2,
-    //   roninAddress: "ronin:1e9d7412e75d4d89df9102f1bf796d86b0ade73f",
-    //   name: "Ichiman",
-    //   createdOn: ""
-    // }
+    {
+        id: 2,
+        roninaddress: "ronin:1e9d7412e75d4d89df9102f1bf796d86b0ade73f",
+        name: "Ichiman",
+        discordid: "543694609159684106",
+        createdOn: ""
+    }
 ];
 /**
  * Call Repository
@@ -71,13 +73,68 @@ var getPostgresClient = function () {
 };
 exports.getPostgresClient = getPostgresClient;
 var listScholars = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var scholars, psqlClient, result, rows, err_1;
     return __generator(this, function (_a) {
-        return [2 /*return*/, scholars];
+        switch (_a.label) {
+            case 0:
+                scholars = [];
+                psqlClient = exports.getPostgresClient();
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 4, 5, 7]);
+                return [4 /*yield*/, psqlClient.connect()];
+            case 2:
+                _a.sent();
+                return [4 /*yield*/, psqlClient.query("\n      SELECT * FROM scholars;\n      ")];
+            case 3:
+                result = _a.sent();
+                rows = result.rows;
+                scholars = rows;
+                return [3 /*break*/, 7];
+            case 4:
+                err_1 = _a.sent();
+                console.log("listScholars " + err_1);
+                return [3 /*break*/, 7];
+            case 5: return [4 /*yield*/, psqlClient.end()];
+            case 6:
+                _a.sent();
+                return [2 /*return*/, scholars];
+            case 7: return [2 /*return*/];
+        }
     });
 }); };
 exports.listScholars = listScholars;
+var dailySLPByRoninAddress = function (roninAddress) { return __awaiter(void 0, void 0, void 0, function () {
+    var psqlClient, result, err_2;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                psqlClient = exports.getPostgresClient();
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 4, 5, 7]);
+                return [4 /*yield*/, psqlClient.connect()];
+            case 2:
+                _a.sent();
+                return [4 /*yield*/, psqlClient.query("\n      SELECT total - lag(total, 1, 0) OVER (ORDER BY created_on) AS result\n      FROM   accumulated_slp\n      WHERE roninAddress = '" + roninAddress + "'\n      ORDER  BY \"created_on\" DESC LIMIT 1;\n      ")];
+            case 3:
+                result = _a.sent();
+                return [2 /*return*/, result];
+            case 4:
+                err_2 = _a.sent();
+                console.log(err_2);
+                return [2 /*return*/, false];
+            case 5: return [4 /*yield*/, psqlClient.end()];
+            case 6:
+                _a.sent();
+                return [7 /*endfinally*/];
+            case 7: return [2 /*return*/];
+        }
+    });
+}); };
+exports.dailySLPByRoninAddress = dailySLPByRoninAddress;
 var addAccumulatedSLP = function (accumulated_SLP) { return __awaiter(void 0, void 0, void 0, function () {
-    var psqlClient, err_1;
+    var psqlClient, err_3;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -95,15 +152,15 @@ var addAccumulatedSLP = function (accumulated_SLP) { return __awaiter(void 0, vo
                     ])];
             case 3:
                 _a.sent();
-                return [2 /*return*/, true];
+                return [3 /*break*/, 7];
             case 4:
-                err_1 = _a.sent();
-                console.log(err_1);
+                err_3 = _a.sent();
+                console.log(err_3);
                 return [2 /*return*/, false];
             case 5: return [4 /*yield*/, psqlClient.end()];
             case 6:
                 _a.sent();
-                return [7 /*endfinally*/];
+                return [2 /*return*/, true];
             case 7: return [2 /*return*/];
         }
     });
