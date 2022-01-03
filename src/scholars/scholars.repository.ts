@@ -81,6 +81,33 @@ export const dailySLPByRoninAddress = async (roninAddress: string) => {
   }
 }
 
+export const dailyStatusReport = async () => {
+  const psqlClient = getPostgresClient();
+  try {
+    await psqlClient.connect();
+    const result = await psqlClient.query(
+      `
+      SELECT 
+      (SELECT asl.total - lag(asl.total, 1, 0) OVER (order by asl.created_on) as result
+      FROM accumulated_slp as asl 
+      WHERE asl.roninAddress = scholars.roninAddress
+      ORDER BY asl."created_on" DESC LIMIT 1) AS farmedslpfromyesterday, 
+      scholars.id as scholarid,
+      scholars.name,
+      scholars.discordid,
+      scholars.roninaddress
+      FROM scholars as scholars
+      ORDER BY farmedslpfromyesterday DESC
+      `
+    );
+    return result;
+  } catch (err) {
+    console.log(err);
+    return false;
+  } finally {
+    await psqlClient.end();
+  }
+}
 
 export const addAccumulatedSLP = async (accumulated_SLP: Accumulated_SLP) => {
   const psqlClient = getPostgresClient();

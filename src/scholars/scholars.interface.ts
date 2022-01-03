@@ -25,3 +25,10 @@ export interface Accumulated_SLP {
   createdOn?: string
 }
 
+export interface DailyStatusReport {
+  farmedslpfromyesterday: number,
+  scholarid: number,
+  name: string,
+  discordid: string,
+  roninaddress: string,
+}

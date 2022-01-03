@@ -6,9 +6,9 @@ import { ChannelManager, Client, Intents, Channel } from "discord.js";
 import { EventEmitter } from "events";
 import { selfPing } from "../app-health/app-health.service";
 import { getTotalSLPByRonin } from "../ronin/ronin.service";
-import { Accumulated_SLP, Scholar } from "../scholars/scholars.interface";
+import { Accumulated_SLP, DailyStatusReport, Scholar } from "../scholars/scholars.interface";
 import { addAccumulatedSLP } from "../scholars/scholars.repository";
-import { getDailySLPByRoninAddress, getScholars, toRoninAddress } from "../scholars/scholars.service";
+import { getDailySLPByRoninAddress, getDailyStatusReport, getScholars, toRoninAddress } from "../scholars/scholars.service";
 import { isProduction } from "../shared/shared.service";
 import { DailyResult, EventTypes, IWorker } from "./poller.interface";
 
@@ -49,7 +49,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                     const channel = this.discordClient.channels.cache.get('862115684820844544');
                     if (channel?.isText()) {
                         if (isProduction()) {
-                            channel.send(`Hey <@&${axieScholarRoleId}>(s) here's your daily reset alert. Brought to you by your BOT police, JARVIB.`);
+                            //  channel.send(`Hey <@&${axieScholarRoleId}>(s) here's your daily reset alert. Brought to you by your BOT police, JARVIB.`);
                         };
                         this.emit(EventTypes.DailyReset);
                     }
@@ -115,19 +115,13 @@ export class EventPoller extends EventEmitter implements IWorker {
 
         this.on(EventTypes.ReadyForReport, async (scholars: Scholar[]) => {
             try {
-                const dailyResults: DailyResult[] = [];
+                const dailyStatusReports = await getDailyStatusReport();
                 const promise = new Promise((resolve: any, reject) => {
-                    scholars.forEach(async (scholar: Scholar, index, scholarList) => {
-                        const result = await getDailySLPByRoninAddress(scholar.roninaddress);
-                        const record = result.rows[0];
-                        const dailyResult: DailyResult = {
-                            dailySLP: record.result,
-                            roninAddress: scholar.roninaddress
-                        };
+                    dailyStatusReports.forEach(async (dailyStatusReport: DailyStatusReport, index, dailyStatusReportList) => {
                         //  Send message
-                        await this.sendMessageToAchievements(`Hey ${this.toDiscordMentionByUserId(scholar.discordid)}. You farmed ${dailyResult.dailySLP} SLPs today.`)
-                        dailyResults.push(dailyResult);
-                        if (index === scholarList.length - 1) resolve();
+                        console.log(`${dailyStatusReport.name}, ${dailyStatusReport.farmedslpfromyesterday}`);
+                        await this.sendMessageToAchievements(`Hey ${this.toDiscordMentionByUserId(dailyStatusReport.discordid)}. You farmed ${dailyStatusReport.farmedslpfromyesterday} SLPs today.`)
+                        if (index === dailyStatusReportList.length - 1) resolve();
                     });
                 });
 
