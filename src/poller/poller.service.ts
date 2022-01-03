@@ -49,7 +49,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                     const channel = this.discordClient.channels.cache.get('862115684820844544');
                     if (channel?.isText()) {
                         if (isProduction()) {
-                            //  channel.send(`Hey <@&${axieScholarRoleId}>(s) here's your daily reset alert. Brought to you by your BOT police, JARVIB.`);
+                            channel.send(`Hey <@&${axieScholarRoleId}>(s) here's your daily reset alert. Brought to you by your BOT police, JARVIB.`);
                         };
                         this.emit(EventTypes.DailyReset);
                     }
