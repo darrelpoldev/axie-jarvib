@@ -58,15 +58,16 @@ export class EventPoller extends EventEmitter implements IWorker {
                 else if (currentHour != hourToNotify) {
                     sent = false;
                     console.log('resetting sent value to false at...', localDateTime);
+                    this.poll(`${process.env.pollingInterval}`);
                 }
                 else {
                     console.log('checking at...', localDateTime);
+                    this.poll(`${process.env.pollingInterval}`);
                 }
                 selfPing();
             } catch (error) {
                 console.error(`Error on ${EventTypes.TICK}`, error);
             }
-            this.poll(`${process.env.pollingInterval}`);
         });
 
         this.on(EventTypes.DailyReset, async () => {
@@ -128,6 +129,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                 promise.then(x => {
                     //  Send message link to summary
                     console.log(`Completed today's Report.`);
+                    this.poll(`${process.env.pollingInterval}`);
                 });
 
 
