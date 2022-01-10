@@ -86,7 +86,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                             total: scholarDetail["total"]
                         };
                         //  This needs some refactoring.
-                        const result = !isProduction() ? true : await addAccumulatedSLP(accumulated_SLP);
+                        const result = await addAccumulatedSLP(accumulated_SLP);
                         if (result) {
                             console.log(`Successfully fetched latest record for ${roninAddress}`);
                         }

@@ -2,9 +2,11 @@ import { writeToJsonFile } from "../file-system/file-system.service";
 import { EventPoller } from "../poller/poller.service";
 import { MMR } from "../ronin/ronin.interfaces";
 import { getMMRbyRoninAddress } from "../ronin/ronin.service";
+import { JobScheduler } from "../scheduler/scheduler.service";
 import { getScholars } from "../scholars/scholars.service";
 import { getHost } from "../shared/shared.service";
 import { Commands, help } from "./jarvib-commands.interfaces";
+const schedule = require('node-schedule');
 
 /**
  * Data Model Interfaces
@@ -50,8 +52,11 @@ export const startListening = async () => {
     console.log(prefix);
     discordClient.once('ready', () => {
         console.log('Ready!');
-        const engine = new EventPoller(discordClient);
-        engine.start();
+        // const engine = new EventPoller(discordClient);
+        // engine.start();
+        const scheduler = new JobScheduler(discordClient);
+        scheduler.start();
+        scheduler.startSelfPingJob();
     });
 
     discordClient.on('messageCreate', async (message: any) => {
