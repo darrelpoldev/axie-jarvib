@@ -5,6 +5,7 @@ import { getMMRbyRoninAddress } from "../ronin/ronin.service";
 import { getScholars } from "../scholars/scholars.service";
 import { getHost } from "../shared/shared.service";
 import { Commands, help } from "./jarvib-commands.interfaces";
+import { createEmbed } from "../discord-commands/discord-commands.service";
 
 /**
  * Data Model Interfaces
@@ -68,6 +69,8 @@ export const startListening = async () => {
             return;
         }
 
+        const username = `${message.author.username}#${message.author.discriminator}`
+
         //  Refactor to avoid spaghetti code.
         if (command.toUpperCase() === Commands.PING) {
             message.reply(`Hello **${message.author.tag}**. What can I do for you?`);
@@ -80,7 +83,24 @@ export const startListening = async () => {
             if (roninAddress === undefined || roninAddress === "") message.reply(`Please provide ronin address`);
             const mmrDetails: MMR = await getMMRbyRoninAddress(roninAddress);
             if (!mmrDetails) message.reply(`Unable to fetch MMR details`);
-            message.reply(`Your current MMR is ${mmrDetails.ELO} and your current ranking is ${mmrDetails.rank}`);
+            //message.reply(`Your current MMR is ${mmrDetails.ELO} and your current ranking is ${mmrDetails.rank}`);
+            
+            const stats = createEmbed({
+                fields: [
+                {
+                    name: '🚀 MMR',
+                    value: `${mmrDetails.ELO}`,
+                    inline: true,
+                },
+                {
+                    name: '👑 rank',
+                    value: `${mmrDetails.rank}`,
+                    inline: true,
+                }],
+                footer: {text: `get good ${username}`}
+            })
+            message.reply({embeds: [stats]});
+
         }
         else {
             message.reply(`The fvck are you saying?`);
