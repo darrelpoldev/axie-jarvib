@@ -52,11 +52,12 @@ export const startListening = async () => {
     console.log(prefix);
     discordClient.once('ready', () => {
         console.log('Ready!');
-        // const engine = new EventPoller(discordClient);
-        // engine.start();
-        const scheduler = new JobScheduler(discordClient);
-        scheduler.start();
-        scheduler.startSelfPingJob();
+        const engine = new EventPoller(discordClient);
+        engine.start();
+        //  Please uncomment this to use JobScheduler in the future.
+        // const scheduler = new JobScheduler(discordClient);
+        // scheduler.start();
+        // scheduler.startSelfPingJob();
     });
 
     discordClient.on('messageCreate', async (message: any) => {
