@@ -5,7 +5,7 @@ import { getMMRbyRoninAddress } from "../ronin/ronin.service";
 import { getScholars } from "../scholars/scholars.service";
 import { getHost } from "../shared/shared.service";
 import { Commands, help } from "./jarvib-commands.interfaces";
-import { createEmbed } from "../discord-commands/discord-commands.service";
+import { createMessageWithEmbeded } from "../discord-commands/discord-commands.service";
 
 /**
  * Data Model Interfaces
@@ -83,9 +83,8 @@ export const startListening = async () => {
             if (roninAddress === undefined || roninAddress === "") message.reply(`Please provide ronin address`);
             const mmrDetails: MMR = await getMMRbyRoninAddress(roninAddress);
             if (!mmrDetails) message.reply(`Unable to fetch MMR details`);
-            //message.reply(`Your current MMR is ${mmrDetails.ELO} and your current ranking is ${mmrDetails.rank}`);
             
-            const stats = createEmbed({
+            const stats = createMessageWithEmbeded({
                 fields: [
                 {
                     name: '🚀 MMR',
