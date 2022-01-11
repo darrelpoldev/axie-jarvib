@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import { selfPing } from "../app-health/app-health.service";
 import { getTotalSLPByRonin } from "../ronin/ronin.service";
 import { Accumulated_SLP, DailyStatusReport, Scholar } from "../scholars/scholars.interface";
-import { addAccumulatedSLP } from "../scholars/scholars.repository";
+import { addAccumulatedSLP, dailyStatusReport } from "../scholars/scholars.repository";
 import { getDailySLPByRoninAddress, getDailyStatusReport, getScholars, toRoninAddress } from "../scholars/scholars.service";
 import { isProduction } from "../shared/shared.service";
 import { DailyResult, EventTypes, IWorker } from "./poller.interface";
@@ -46,7 +46,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                 const localDateTime = new Date(utcDate.toString());
                 const currentHour = localDateTime.getHours();
                 if ((currentHour == hourToNotify || process.env.environment != "prod") && !sent) {
-                    const channel = this.discordClient.channels.cache.get('862115684820844544');
+                    const channel = this.discordClient.channels.cache.get(`${process.env.discordChannelId}`);
                     if (channel?.isText()) {
                         if (isProduction()) {
                             channel.send(`Hey <@&${axieScholarRoleId}>(s) here's your daily reset alert. Brought to you by your BOT police, JARVIB.`);
@@ -74,65 +74,47 @@ export class EventPoller extends EventEmitter implements IWorker {
             try {
                 const scholars = await getScholars();
                 if (scholars.length == 0) return;
-                const collectAccumulatedSLP = new Promise((resolve: any, reject) => {
-                    scholars.forEach(async (scholar: Scholar, index, scholarList) => {
-                        const roninAddress = scholar.roninaddress;
-                        const scholarDetails = await getTotalSLPByRonin(roninAddress);
-                        if (!scholarDetails) return; // This has to be moved or handled somewhere.
-                        const scholarDetail = scholarDetails.shift();
-                        const accumulated_SLP: Accumulated_SLP = {
-                            roninAddress: await toRoninAddress(scholarDetail["client_id"]),
-                            scholarId: scholar.id,
-                            total: scholarDetail["total"]
-                        };
-                        //  This needs some refactoring.
-                        const result = !isProduction() ? true : await addAccumulatedSLP(accumulated_SLP);
-                        if (result) {
-                            console.log(`Successfully fetched latest record for ${roninAddress}`);
-                        }
-                        if (index === scholarList.length - 1) resolve();
-                    });
-                });
-
-                collectAccumulatedSLP.then(x => {
-                    //  Send message link to summary
+                await Promise.all(scholars.map(async (scholar: Scholar) => {
+                    const roninAddress = scholar.roninaddress;
+                    const scholarDetails = await getTotalSLPByRonin(roninAddress);
+                    if (!scholarDetails) return; // This has to be moved or handled somewhere.
+                    const scholarDetail = scholarDetails.shift();
+                    const accumulated_SLP: Accumulated_SLP = {
+                        roninAddress: await toRoninAddress(scholarDetail["client_id"]),
+                        scholarId: scholar.id,
+                        total: scholarDetail["total"]
+                    };
+                    const result = await addAccumulatedSLP(accumulated_SLP);
+                    if (result) {
+                        console.log(`Successfully fetched latest record for ${roninAddress}`);
+                    }
+                })).then(result => {
                     console.log(`Completed collecting accumulated SLPs...`);
-                    this.emit(EventTypes.ReadyForReport, scholars);
-                });
-
-                collectAccumulatedSLP.catch(err => {
+                    this.emit(EventTypes.ReadyForReport);
+                }).catch((error: any) => {
                     this.sendMessageToAchievements(`I'm failing master. Please check the logs.`);
-                    console.log(`Unable to collect accumulated SLPs. ${err}`);
+                    console.log(`Unable to collect accumulated SLPs. ${error}`);
                 });
-
             } catch (error) {
                 console.log(`Unable to compose daily report...`, error);
                 this.sendMessageToAchievements(`I'm failing master. Please check the logs.`);
             }
-
-            //  Compare to previous day
-            //  Notify today's earning of each Scholar
         });
 
-        this.on(EventTypes.ReadyForReport, async (scholars: Scholar[]) => {
+        this.on(EventTypes.ReadyForReport, async () => {
             try {
                 const dailyStatusReports = await getDailyStatusReport();
-                const promise = new Promise((resolve: any, reject) => {
-                    dailyStatusReports.forEach(async (dailyStatusReport: DailyStatusReport, index, dailyStatusReportList) => {
-                        //  Send message
-                        console.log(`${dailyStatusReport.name}, ${dailyStatusReport.farmedslpfromyesterday}`);
-                        await this.sendMessageToAchievements(`Hey ${this.toDiscordMentionByUserId(dailyStatusReport.discordid)}. You farmed ${dailyStatusReport.farmedslpfromyesterday} SLPs today.`)
-                        if (index === dailyStatusReportList.length - 1) resolve();
-                    });
-                });
-
-                promise.then(x => {
-                    //  Send message link to summary
+                await Promise.all(dailyStatusReports.map(async (dailyStatusReport: DailyStatusReport) => {
+                    //  Send message
+                    console.log(`${dailyStatusReport.name}, ${dailyStatusReport.farmedslpfromyesterday}`);
+                    await this.sendMessageToAchievements(`Hey ${this.toDiscordMentionByUserId(dailyStatusReport.discordid)}. You farmed ${dailyStatusReport.farmedslpfromyesterday} SLPs today.`)
+                })).then((result: any) => {
                     console.log(`Completed today's Report.`);
                     this.poll(`${process.env.pollingInterval}`);
+                }).catch((error) => {
+                    console.log(`Unable to compose daily report...`, error);
+                    this.sendMessageToAchievements(`I'm failing master. Please check the logs.`);
                 });
-
-
             } catch (error) {
                 console.log(`EventTypes.ReadyForReport ${error}`);
             }
