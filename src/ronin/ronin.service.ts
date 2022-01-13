@@ -1,6 +1,6 @@
 import { MMR } from "./ronin.interfaces";
 import Web3 from "web3";
-import { mainnet, reqConfig } from "../shared/shared.service";
+import { mainnet, reqConfig, toClientId } from "../shared/shared.service";
 const web3 = new Web3();
 
 /**
@@ -65,6 +65,14 @@ export const fetchData = async (
     return data;
 };
 
+export const getAccessToken = async () => {
+    const roninAccountAddress = `${await toClientId(`${process.env.roninAccountAddress}`)}`;
+    const roninAccountPrivateKey = `${process.env.roninAccountPrivateKey}`;
+    const randomMessageResponse = await getRandomMessage();
+    const accessToken = await submitSignature(roninAccountAddress, roninAccountPrivateKey, randomMessageResponse.data);
+    return accessToken;
+}
+
 export const getRandomMessage = async () => {
     try {
         const response = await fetchData({
@@ -74,12 +82,12 @@ export const getRandomMessage = async () => {
         });
         return {
             status: true,
-            message: response.data.createRandomMessage
+            data: response.data.createRandomMessage
         }
     } catch (err) {
         console.log(err);
         return {
-            message: '',
+            data: '',
             status: false
         }
     }
@@ -92,7 +100,6 @@ export const submitSignature = async (
     try {
         let hexSignature = web3.eth.accounts.sign(randMessage, privateKey);
         const signature = hexSignature['signature'];
-
         const response = await fetchData({
             "operationName": "CreateAccessTokenWithSignature",
             "variables": { "input": { "mainnet": mainnet, "owner": accountAddress, "message": randMessage, "signature": signature } },

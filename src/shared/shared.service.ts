@@ -31,3 +31,9 @@ export const reqConfig = {
         "authority": "graphql-gateway.axieinfinity.com"
     }
 };
+
+
+//  Converts "ronin:" to "0x"
+export const toClientId = async (clientId: string) => {
+    return clientId.replace('ronin:', `0x`);
+};

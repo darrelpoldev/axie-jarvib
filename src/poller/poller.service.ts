@@ -5,7 +5,7 @@
 import { ChannelManager, Client, Intents, Channel } from "discord.js";
 import { EventEmitter } from "events";
 import { selfPing } from "../app-health/app-health.service";
-import { getTotalSLPByRonin } from "../ronin/ronin.service";
+import { getAccessToken, getTotalSLPByRonin } from "../ronin/ronin.service";
 import { Accumulated_SLP, DailyStatusReport, Scholar } from "../scholars/scholars.interface";
 import { addAccumulatedSLP, dailyStatusReport } from "../scholars/scholars.repository";
 import { getDailySLPByRoninAddress, getDailyStatusReport, getScholars, toRoninAddress } from "../scholars/scholars.service";
@@ -72,6 +72,9 @@ export class EventPoller extends EventEmitter implements IWorker {
 
         this.on(EventTypes.DailyReset, async () => {
             try {
+                const accessToken = await getAccessToken();
+                console.log(accessToken);
+                return;
                 const scholars = await getScholars();
                 if (scholars.length == 0) return;
                 await Promise.all(scholars.map(async (scholar: Scholar) => {
