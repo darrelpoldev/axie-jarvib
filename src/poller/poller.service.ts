@@ -78,9 +78,11 @@ export class EventPoller extends EventEmitter implements IWorker {
                 const scholars = await getScholars();
                 if (scholars.length == 0) return; // Can we avoid these kind of defense?
                 const SLPDetails = await getSLPInfoByRoninAddresses(scholars.map(scholar => scholar.roninaddress), accessTokenResponse.data);
+                //  TODO: Save MMR details to database;
                 const MMRDetails = await getMMRInfoByRoninAddresses(scholars.map(scholar => scholar.roninaddress), accessTokenResponse.data);
                 await Promise.all(scholars.map(async (scholar: Scholar) => {
-                    const clientAddress = toClientId(scholar.roninaddress);
+                    const clientAddress = await toClientId(scholar.roninaddress);
+
 
 
 
