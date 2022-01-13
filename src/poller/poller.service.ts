@@ -5,11 +5,11 @@
 import { ChannelManager, Client, Intents, Channel } from "discord.js";
 import { EventEmitter } from "events";
 import { selfPing } from "../app-health/app-health.service";
-import { getAccessToken, getTotalSLPByRonin } from "../ronin/ronin.service";
+import { getAccessToken, getMMRInfoByRoninAddresses, getSLPInfoByRoninAddresses, getTotalSLPByRonin } from "../ronin/ronin.service";
 import { Accumulated_SLP, DailyStatusReport, Scholar } from "../scholars/scholars.interface";
 import { addAccumulatedSLP, dailyStatusReport } from "../scholars/scholars.repository";
 import { getDailySLPByRoninAddress, getDailyStatusReport, getScholars, toRoninAddress } from "../scholars/scholars.service";
-import { isProduction } from "../shared/shared.service";
+import { isProduction, toClientId } from "../shared/shared.service";
 import { DailyResult, EventTypes, IWorker } from "./poller.interface";
 
 
@@ -72,11 +72,23 @@ export class EventPoller extends EventEmitter implements IWorker {
 
         this.on(EventTypes.DailyReset, async () => {
             try {
-                const accessToken = await getAccessToken();
-                console.log(accessToken);
-                return;
+                const accessTokenResponse = await getAccessToken();
+                console.log(accessTokenResponse.data);
+                if (!accessTokenResponse.data) return; // Can we avoid these kind of defense?
                 const scholars = await getScholars();
-                if (scholars.length == 0) return;
+                if (scholars.length == 0) return; // Can we avoid these kind of defense?
+                const SLPDetails = await getSLPInfoByRoninAddresses(scholars.map(scholar => scholar.roninaddress), accessTokenResponse.data);
+                const MMRDetails = await getMMRInfoByRoninAddresses(scholars.map(scholar => scholar.roninaddress), accessTokenResponse.data);
+                await Promise.all(scholars.map(async (scholar: Scholar) => {
+                    const clientAddress = toClientId(scholar.roninaddress);
+
+
+
+                }));
+
+                return;
+
+
                 await Promise.all(scholars.map(async (scholar: Scholar) => {
                     const roninAddress = scholar.roninaddress;
                     const scholarDetails = await getTotalSLPByRonin(roninAddress);

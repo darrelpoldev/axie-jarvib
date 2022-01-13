@@ -1,6 +1,7 @@
 import { MMR } from "./ronin.interfaces";
 import Web3 from "web3";
-import { mainnet, reqConfig, toClientId } from "../shared/shared.service";
+import { mainnet, axieRequiredHeaders, toClientId } from "../shared/shared.service";
+import { MethodResponse } from "../shared/shared.interfaces";
 const web3 = new Web3();
 
 /**
@@ -28,6 +29,52 @@ export const getTotalSLPByRonin = async (roninAddress: string) => {
     }
 }
 
+export const getSLPInfoByRoninAddresses = async (roninAddresses: string[], authorization?: string): Promise<MethodResponse> => {
+    const methodResponse: MethodResponse = {
+        data: "",
+        success: false
+    }
+    try {
+        const roninResponse = await getData(`${process.env.roninSLPEndpoint}/${roninAddresses.toString()}`, authorization);
+        const methodResponse: MethodResponse = {
+            data: roninResponse,
+            success: true
+        }
+        return methodResponse;
+    } catch (error) {
+        methodResponse.errorDetails = {
+            message: "Unable to get AccessToken",
+            stack: error
+        }
+        return methodResponse;
+    }
+}
+
+export const getMMRInfoByRoninAddresses = async (roninAddresses: string[], authorization?: string): Promise<MethodResponse> => {
+    let methodResponse: MethodResponse = {
+        data: "",
+        success: false
+    }
+    try {
+        const roninResponse = await getData(`${process.env.roninMMREndpoint}/${roninAddresses.toString()}`, authorization);
+        if (roninResponse) {
+            const playerMMRInfos = roninResponse.map((itemInfo: any) => {
+                const playerMMR = itemInfo.items[1];
+                return playerMMR;
+            });
+            methodResponse.data = playerMMRInfos;
+            methodResponse.success = true;
+        }
+        return methodResponse;
+    } catch (error) {
+        methodResponse.errorDetails = {
+            message: "Unable to get AccessToken",
+            stack: error
+        }
+        return methodResponse;
+    }
+}
+
 export const getMMRbyRoninAddress = async (roninAddress: string) => {
     let result: MMR = {
         ELO: 0,
@@ -52,11 +99,20 @@ export const getMMRbyRoninAddress = async (roninAddress: string) => {
     }
 }
 
+export const getData = async (endpoint: string, authorization?: string): Promise<any> => {
+    const { data, status } = await axios.get(endpoint, axieRequiredHeaders(authorization));
+    if (status < 200 && status >= 300) {
+        throw Error('Axie Infinity API have a problem');
+    }
+    return data;
+};
+
+
 export const fetchData = async (
     postData: { [key: string]: any }
 ): Promise<any> => {
-    const url = 'https://graphql-gateway.axieinfinity.com/graphql';
-    const { data, status } = await axios.post(url, postData, reqConfig);
+    const url = `${process.env.axieGQLEndpoint}`;
+    const { data, status } = await axios.post(url, postData, axieRequiredHeaders());
 
     if (status < 200 && status >= 300) {
         throw Error('Axie Infinity API have a problem');
@@ -65,12 +121,29 @@ export const fetchData = async (
     return data;
 };
 
-export const getAccessToken = async () => {
-    const roninAccountAddress = `${await toClientId(`${process.env.roninAccountAddress}`)}`;
-    const roninAccountPrivateKey = `${process.env.roninAccountPrivateKey}`;
-    const randomMessageResponse = await getRandomMessage();
-    const accessToken = await submitSignature(roninAccountAddress, roninAccountPrivateKey, randomMessageResponse.data);
-    return accessToken;
+export const getAccessToken = async (): Promise<MethodResponse> => {
+    const methodResponse: MethodResponse = {
+        data: "",
+        success: false
+    }
+    try {
+        const roninAccountAddress = `${await toClientId(`${process.env.roninAccountAddress}`)}`;
+        const roninAccountPrivateKey = `${process.env.roninAccountPrivateKey}`;
+        const randomMessageResponse = await getRandomMessage();
+        const accessToken = await submitSignature(roninAccountAddress, roninAccountPrivateKey, randomMessageResponse.data);
+        const methodResponse: MethodResponse = {
+            data: accessToken,
+            success: true
+        }
+        return methodResponse;
+    } catch (error) {
+        methodResponse.errorDetails = {
+            message: "Unable to get AccessToken",
+            stack: error
+        }
+        return methodResponse;
+    }
+
 }
 
 export const getRandomMessage = async () => {
