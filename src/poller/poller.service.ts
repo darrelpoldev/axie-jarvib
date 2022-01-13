@@ -82,10 +82,10 @@ export class EventPoller extends EventEmitter implements IWorker {
                 const MMRDetails = await getMMRInfoByRoninAddresses(scholars.map(scholar => scholar.roninaddress), accessTokenResponse.data);
                 await Promise.all(scholars.map(async (scholar: Scholar) => {
                     const clientAddress = await toClientId(scholar.roninaddress);
-
-
-
-
+                    const SLPInfo = SLPDetails.data.filter((detail: any) => detail["client_id"] == clientAddress).shift();
+                    const MMRInfo = MMRDetails.data.filter((detail: any) => detail["client_id"] == clientAddress).shift();
+                    // console.log(`${scholar.name}: ELO-${MMRInfo["elo"]} RANK-${MMRInfo["rank"]}`);
+                    // console.log(`${scholar.name}: ${SLPInfo["total"]}`);
                 }));
 
                 return;
