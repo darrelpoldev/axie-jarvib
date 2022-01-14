@@ -86,6 +86,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                     const MMRInfo = MMRDetails.data.filter((detail: any) => detail["client_id"] == clientAddress).shift();
                     // console.log(`${scholar.name}: ELO-${MMRInfo["elo"]} RANK-${MMRInfo["rank"]}`);
                     // console.log(`${scholar.name}: ${SLPInfo["total"]}`);
+
                 }));
 
                 return;
