@@ -121,14 +121,14 @@ export const fetchData = async (
     return data;
 };
 
-export const getAccessToken = async (): Promise<MethodResponse> => {
+export const getAccessToken = async (roninAddress: string, roninPrivateKey: string): Promise<MethodResponse> => {
     const methodResponse: MethodResponse = {
         data: "",
         success: false
     }
     try {
-        const roninAccountAddress = `${await toClientId(`${process.env.roninAccountAddress}`)}`;
-        const roninAccountPrivateKey = `${process.env.roninAccountPrivateKey}`;
+        const roninAccountAddress = roninAddress;
+        const roninAccountPrivateKey = roninPrivateKey;
         const randomMessageResponse = await getRandomMessage();
         const accessToken = await submitSignature(roninAccountAddress, roninAccountPrivateKey, randomMessageResponse.data);
         const methodResponse: MethodResponse = {

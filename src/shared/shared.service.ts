@@ -2,7 +2,7 @@
  * Data Model Interfaces
  * Libraries
  */
-
+var CryptoJS = require("crypto-js");
 
 /**
  * Call Repository
@@ -44,3 +44,10 @@ export const axieRequiredHeaders = (authorization?: string) => {
 export const toClientId = async (clientId: string) => {
     return clientId.replace('ronin:', `0x`);
 };
+
+export const decryptKey = async (encryptedKey: string): Promise<string> => {
+    if (encryptedKey == "") return "";
+    var bytes = CryptoJS.AES.decrypt(encryptedKey, `${process.env.cryptojsKey}`);
+    const decryptedMessage = bytes.toString(CryptoJS.enc.Utf8);
+    return decryptedMessage;
+}

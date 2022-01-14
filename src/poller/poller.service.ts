@@ -6,10 +6,10 @@ import { ChannelManager, Client, Intents, Channel } from "discord.js";
 import { EventEmitter } from "events";
 import { selfPing } from "../app-health/app-health.service";
 import { getAccessToken, getMMRInfoByRoninAddresses, getSLPInfoByRoninAddresses, getTotalSLPByRonin } from "../ronin/ronin.service";
-import { Accumulated_SLP, DailyStatusReport, Scholar } from "../scholars/scholars.interface";
+import { Accumulated_SLP, DailyStats, DailyStatusReport, Scholar } from "../scholars/scholars.interface";
 import { addAccumulatedSLP, dailyStatusReport } from "../scholars/scholars.repository";
 import { getDailySLPByRoninAddress, getDailyStatusReport, getScholars, toRoninAddress } from "../scholars/scholars.service";
-import { isProduction, toClientId } from "../shared/shared.service";
+import { decryptKey, isProduction, toClientId } from "../shared/shared.service";
 import { DailyResult, EventTypes, IWorker } from "./poller.interface";
 
 
@@ -72,8 +72,10 @@ export class EventPoller extends EventEmitter implements IWorker {
 
         this.on(EventTypes.DailyReset, async () => {
             try {
-                const accessTokenResponse = await getAccessToken();
-                console.log(accessTokenResponse.data);
+                const defaultRoninAccountAddress = `${await toClientId(`${process.env.roninAccountAddress}`)}`;
+                const defaultRoninAccountPrivateKey = `${process.env.roninAccountPrivateKey}`;
+                const accessTokenResponse = await getAccessToken(defaultRoninAccountAddress, defaultRoninAccountPrivateKey);
+                // console.log(accessTokenResponse.data);
                 if (!accessTokenResponse.data) return; // Can we avoid these kind of defense?
                 const scholars = await getScholars();
                 if (scholars.length == 0) return; // Can we avoid these kind of defense?
@@ -84,6 +86,23 @@ export class EventPoller extends EventEmitter implements IWorker {
                     const clientAddress = await toClientId(scholar.roninaddress);
                     const SLPInfo = SLPDetails.data.filter((detail: any) => detail["client_id"] == clientAddress).shift();
                     const MMRInfo = MMRDetails.data.filter((detail: any) => detail["client_id"] == clientAddress).shift();
+                    const dailyStats: DailyStats = {
+                        scholarid: scholar.id,
+                        roninaddress: scholar.roninaddress,
+                        totalslp: SLPInfo["total"],
+                        currentrank: MMRInfo["rank"],
+                        elo: MMRInfo["elo"]
+                    };
+                    console.log(scholar.encryptedprivatekey);
+                    const decryptedMessage = await decryptKey(scholar.encryptedprivatekey || "");
+                    if (decryptedMessage) {
+                        const scholarAccessToken = await getAccessToken(`${await toClientId(`${scholar.roninaddress}`)}`, decryptedMessage);
+                        console.log(scholarAccessToken);
+                        // TODO: Avoid special characters on encryption;
+                    }
+
+
+                    console.log(dailyStats);
                     // console.log(`${scholar.name}: ELO-${MMRInfo["elo"]} RANK-${MMRInfo["rank"]}`);
                     // console.log(`${scholar.name}: ${SLPInfo["total"]}`);
 
