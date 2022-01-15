@@ -5,10 +5,12 @@
 import { ChannelManager, Client, Intents, Channel } from "discord.js";
 import { EventEmitter } from "events";
 import { selfPing } from "../app-health/app-health.service";
-import { getAccessToken, getMMRInfoByRoninAddresses, getSLPInfoByRoninAddresses, getTotalSLPByRonin } from "../ronin/ronin.service";
+import { MissionType, Quests, QuestType } from "../ronin/ronin.interfaces";
+import { getAccessToken, getMissionStatRoninAddress, getMMRInfoByRoninAddresses, getSLPInfoByRoninAddresses, getTotalSLPByRonin } from "../ronin/ronin.service";
 import { Accumulated_SLP, DailyStats, DailyStatusReport, Scholar } from "../scholars/scholars.interface";
 import { addAccumulatedSLP, dailyStatusReport } from "../scholars/scholars.repository";
 import { getDailySLPByRoninAddress, getDailyStatusReport, getScholars, toRoninAddress } from "../scholars/scholars.service";
+import { MethodResponse } from "../shared/shared.interfaces";
 import { decryptKey, isProduction, toClientId } from "../shared/shared.service";
 import { DailyResult, EventTypes, IWorker } from "./poller.interface";
 
@@ -77,11 +79,12 @@ export class EventPoller extends EventEmitter implements IWorker {
                 const accessTokenResponse = await getAccessToken(defaultRoninAccountAddress, defaultRoninAccountPrivateKey);
                 // console.log(accessTokenResponse.data);
                 if (!accessTokenResponse.data) return; // Can we avoid these kind of defense?
+                // const scholars = await (await getScholars()).filter(x => x.id == 2);
                 const scholars = await getScholars();
                 if (scholars.length == 0) return; // Can we avoid these kind of defense?
-                const SLPDetails = await getSLPInfoByRoninAddresses(scholars.map(scholar => scholar.roninaddress), accessTokenResponse.data);
+                const SLPDetails = await getSLPInfoByRoninAddresses(scholars.map(scholar => scholar.roninaddress));
                 //  TODO: Save MMR details to database;
-                const MMRDetails = await getMMRInfoByRoninAddresses(scholars.map(scholar => scholar.roninaddress), accessTokenResponse.data);
+                const MMRDetails = await getMMRInfoByRoninAddresses(scholars.map(scholar => scholar.roninaddress));
                 await Promise.all(scholars.map(async (scholar: Scholar) => {
                     const clientAddress = await toClientId(scholar.roninaddress);
                     const SLPInfo = SLPDetails.data.filter((detail: any) => detail["client_id"] == clientAddress).shift();
@@ -93,15 +96,24 @@ export class EventPoller extends EventEmitter implements IWorker {
                         currentrank: MMRInfo["rank"],
                         elo: MMRInfo["elo"]
                     };
-                    console.log(scholar.encryptedprivatekey);
-                    const decryptedMessage = await decryptKey(scholar.encryptedprivatekey || "");
-                    if (decryptedMessage) {
-                        const scholarAccessToken = await getAccessToken(`${await toClientId(`${scholar.roninaddress}`)}`, decryptedMessage);
-                        console.log(scholarAccessToken);
+                    const scholarPrivateKey = await decryptKey(scholar.encryptedprivatekey || "");
+                    if (scholarPrivateKey) {
+                        const scholarAccessToken = await getAccessToken(clientAddress, scholarPrivateKey);
+                        if (!accessTokenResponse.data) {
+                            console.log(`Unable to fetch scholar's accesstoken.`);
+                            return;
+                        }; // Can we avoid these kind of defense?
+
+                        const quests: MethodResponse = await getMissionStatRoninAddress(scholar.roninaddress, scholarAccessToken.data);
+                        if (quests.data) {
+                            const quest: Quests[] = <Quests[]>quests.data;
+                            const dailyQuest = quest.filter(q => q.quest_type === QuestType.quest_type).shift();
+                            const missions = dailyQuest?.missions;
+                            const pvp = missions?.filter(m => m.mission_type === MissionType.pvp).shift();
+                            dailyStats.lasttotalwincount = pvp?.progress;
+                        }
                         // TODO: Avoid special characters on encryption;
                     }
-
-
                     console.log(dailyStats);
                     // console.log(`${scholar.name}: ELO-${MMRInfo["elo"]} RANK-${MMRInfo["rank"]}`);
                     // console.log(`${scholar.name}: ${SLPInfo["total"]}`);

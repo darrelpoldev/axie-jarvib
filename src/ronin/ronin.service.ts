@@ -1,4 +1,4 @@
-import { MMR } from "./ronin.interfaces";
+import { Missions, MMR, Quests } from "./ronin.interfaces";
 import Web3 from "web3";
 import { mainnet, axieRequiredHeaders, toClientId } from "../shared/shared.service";
 import { MethodResponse } from "../shared/shared.interfaces";
@@ -184,3 +184,21 @@ export const submitSignature = async (
         return false;
     }
 };
+
+export const getMissionStatRoninAddress = async (roninAddress: string, accessToken: string) => {
+    const methodResponse: MethodResponse = {
+        data: "",
+        success: false
+    }
+    try {
+        if (roninAddress == "") return methodResponse;
+        const response = await getData(`${process.env.roninMissionStatsEndpoint}/${roninAddress}`, accessToken);
+        const quests: Quests[] = <Quests[]>response["items"];
+        methodResponse.data = quests;
+        methodResponse.success = true;
+    } catch (errorMessage) {
+        console.log(`getMissionStatRoninAddress ${errorMessage}`);
+    } finally {
+        return methodResponse;
+    }
+}

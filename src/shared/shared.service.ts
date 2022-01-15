@@ -47,7 +47,8 @@ export const toClientId = async (clientId: string) => {
 
 export const decryptKey = async (encryptedKey: string): Promise<string> => {
     if (encryptedKey == "") return "";
-    var bytes = CryptoJS.AES.decrypt(encryptedKey, `${process.env.cryptojsKey}`);
+    const superSecretKey = `${process.env.cryptojsKey}`;
+    var bytes = CryptoJS.AES.decrypt(encryptedKey, superSecretKey);
     const decryptedMessage = bytes.toString(CryptoJS.enc.Utf8);
     return decryptedMessage;
 }
