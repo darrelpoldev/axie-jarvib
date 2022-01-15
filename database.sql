@@ -10,7 +10,7 @@ CREATE TABLE scholars (
 CREATE TABLE daily_stats (
     id serial PRIMARY KEY, 
     scholarId INT,
-    roninAddress VARCHAR ( 255 ) UNIQUE NOT NULL, 
+    roninAddress VARCHAR ( 255 ) NOT NULL, 
     totalSLP INT NOT NULL,
     elo INT NOT NULL,
     currentRank INT NOT NULL,

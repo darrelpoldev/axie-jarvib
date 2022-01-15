@@ -4,7 +4,8 @@
  */
 const { Client } = require('pg');
 
-import { Accumulated_SLP, Scholar } from "./scholars.interface";
+import { MethodResponse } from "../shared/shared.interfaces";
+import { Accumulated_SLP, DailyStats, Scholar } from "./scholars.interface";
 
 
 const dummyScholars: Scholar[] = [
@@ -131,6 +132,25 @@ export const addAccumulatedSLP = async (accumulated_SLP: Accumulated_SLP) => {
   }
 }
 
+export const executeQuery = async (query: string, params?: any[]) => {
+  const methodResponse: MethodResponse = {
+    data: "",
+    success: false
+  }
+  const psqlClient = getPostgresClient();
+  try {
+    await psqlClient.connect();
+    const queryResult = await psqlClient.query(query, params);
+    methodResponse.data = queryResult;
+    methodResponse.success = true;
+  } catch (err) {
+    console.log(`executeQuery ${err}`);
+    methodResponse.success = false;
+  } finally {
+    await psqlClient.end();
+    return methodResponse;
+  }
+}
 /**
  * Service Methods
  */

@@ -9,7 +9,7 @@ import { MissionType, Quests, QuestType } from "../ronin/ronin.interfaces";
 import { getAccessToken, getMissionStatRoninAddress, getMMRInfoByRoninAddresses, getSLPInfoByRoninAddresses, getTotalSLPByRonin } from "../ronin/ronin.service";
 import { Accumulated_SLP, DailyStats, DailyStatusReport, Scholar } from "../scholars/scholars.interface";
 import { addAccumulatedSLP, dailyStatusReport } from "../scholars/scholars.repository";
-import { getDailySLPByRoninAddress, getDailyStatusReport, getScholars, toRoninAddress } from "../scholars/scholars.service";
+import { addDailyStats, getDailySLPByRoninAddress, getDailyStatusReport, getScholars, toRoninAddress } from "../scholars/scholars.service";
 import { MethodResponse } from "../shared/shared.interfaces";
 import { decryptKey, isProduction, toClientId } from "../shared/shared.service";
 import { DailyResult, EventTypes, IWorker } from "./poller.interface";
@@ -74,10 +74,13 @@ export class EventPoller extends EventEmitter implements IWorker {
 
         this.on(EventTypes.DailyReset, async () => {
             try {
+                const promiseAllResult: MethodResponse = {
+                    data: "",
+                    success: false
+                }
                 const defaultRoninAccountAddress = `${await toClientId(`${process.env.roninAccountAddress}`)}`;
                 const defaultRoninAccountPrivateKey = `${process.env.roninAccountPrivateKey}`;
                 const accessTokenResponse = await getAccessToken(defaultRoninAccountAddress, defaultRoninAccountPrivateKey);
-                // console.log(accessTokenResponse.data);
                 if (!accessTokenResponse.data) return; // Can we avoid these kind of defense?
                 // const scholars = await (await getScholars()).filter(x => x.id == 2);
                 const scholars = await getScholars();
@@ -94,7 +97,8 @@ export class EventPoller extends EventEmitter implements IWorker {
                         roninaddress: scholar.roninaddress,
                         totalslp: SLPInfo["total"],
                         currentrank: MMRInfo["rank"],
-                        elo: MMRInfo["elo"]
+                        elo: MMRInfo["elo"],
+                        lasttotalwincount: 0
                     };
                     const scholarPrivateKey = await decryptKey(scholar.encryptedprivatekey || "");
                     if (scholarPrivateKey) {
@@ -112,37 +116,21 @@ export class EventPoller extends EventEmitter implements IWorker {
                             const pvp = missions?.filter(m => m.mission_type === MissionType.pvp).shift();
                             dailyStats.lasttotalwincount = pvp?.progress;
                         }
-                        // TODO: Avoid special characters on encryption;
                     }
-                    console.log(dailyStats);
-                    // console.log(`${scholar.name}: ELO-${MMRInfo["elo"]} RANK-${MMRInfo["rank"]}`);
-                    // console.log(`${scholar.name}: ${SLPInfo["total"]}`);
-
-                }));
-
-                return;
-
-
-                await Promise.all(scholars.map(async (scholar: Scholar) => {
-                    const roninAddress = scholar.roninaddress;
-                    const scholarDetails = await getTotalSLPByRonin(roninAddress);
-                    if (!scholarDetails) return; // This has to be moved or handled somewhere.
-                    const scholarDetail = scholarDetails.shift();
-                    const accumulated_SLP: Accumulated_SLP = {
-                        roninAddress: await toRoninAddress(scholarDetail["client_id"]),
-                        scholarId: scholar.id,
-                        total: scholarDetail["total"]
-                    };
-                    const result = await addAccumulatedSLP(accumulated_SLP);
-                    if (result) {
-                        console.log(`Successfully fetched latest record for ${roninAddress}`);
+                    const result = await addDailyStats(dailyStats);
+                    if (result.success) {
+                        console.log(`Successfully fetched daily status for ${scholar.name} - ${scholar.roninaddress}`);
                     }
-                })).then(result => {
-                    console.log(`Completed collecting accumulated SLPs...`);
+                    else {
+                        this.sendMessageToAchievements(`There are some problem fetching daily status for ${scholar.name} - ${scholar.roninaddress}. Please help.`);
+                        console.log(`Unable to save daily status for ${scholar.name} - ${scholar.roninaddress}`);
+                    }
+                })).then(() => {
+                    console.log(`Completed consolidating daily statistics...`);
                     this.emit(EventTypes.ReadyForReport);
-                }).catch((error: any) => {
-                    this.sendMessageToAchievements(`I'm failing master. Please check the logs.`);
-                    console.log(`Unable to collect accumulated SLPs. ${error}`);
+                }).catch(err => {
+                    this.sendMessageToAchievements(`Master, I'm unable to consolidate daily status. Please help.`);
+                    console.log(`Unable to collect daily stats. ${err}`);
                 });
             } catch (error) {
                 console.log(`Unable to compose daily report...`, error);
@@ -152,18 +140,19 @@ export class EventPoller extends EventEmitter implements IWorker {
 
         this.on(EventTypes.ReadyForReport, async () => {
             try {
-                const dailyStatusReports = await getDailyStatusReport();
-                await Promise.all(dailyStatusReports.map(async (dailyStatusReport: DailyStatusReport) => {
-                    //  Send message
-                    console.log(`${dailyStatusReport.name}, ${dailyStatusReport.farmedslpfromyesterday}`);
-                    await this.sendMessageToAchievements(`Hey ${this.toDiscordMentionByUserId(dailyStatusReport.discordid)}. You farmed ${dailyStatusReport.farmedslpfromyesterday} SLPs today.`)
-                })).then((result: any) => {
-                    console.log(`Completed today's Report.`);
-                    this.poll(`${process.env.pollingInterval}`);
-                }).catch((error) => {
-                    console.log(`Unable to compose daily report...`, error);
-                    this.sendMessageToAchievements(`I'm failing master. Please check the logs.`);
-                });
+                console.log('here is your daily report');
+                // const dailyStatusReports = await getDailyStatusReport();
+                // await Promise.all(dailyStatusReports.map(async (dailyStatusReport: DailyStatusReport) => {
+                //     //  Send message
+                //     console.log(`${dailyStatusReport.name}, ${dailyStatusReport.farmedslpfromyesterday}`);
+                //     await this.sendMessageToAchievements(`Hey ${this.toDiscordMentionByUserId(dailyStatusReport.discordid)}. You farmed ${dailyStatusReport.farmedslpfromyesterday} SLPs today.`)
+                // })).then((result: any) => {
+                //     console.log(`Completed today's Report.`);
+                //     this.poll(`${process.env.pollingInterval}`);
+                // }).catch((error) => {
+                //     console.log(`Unable to compose daily report...`, error);
+                //     this.sendMessageToAchievements(`I'm failing master. Please check the logs.`);
+                // });
             } catch (error) {
                 console.log(`EventTypes.ReadyForReport ${error}`);
             }
@@ -179,7 +168,6 @@ export class EventPoller extends EventEmitter implements IWorker {
     }
 
     async sendMessageToAchievements(message: string) {
-        if (!isProduction()) return;
         const channel = this.discordClient.channels.cache.get(`${process.env.discordChannelId}`);
         if (channel?.isText()) {
             channel.send(message);
