@@ -36,6 +36,8 @@ export interface DailyStatusReport {
 
 export interface DailyStats {
   scholarid: number,
+  name: string,
+  discordid: string,
   roninaddress: string,
   totalslp: number,
   elo: number,
