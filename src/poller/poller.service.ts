@@ -9,7 +9,7 @@ import { MissionType, Quests, QuestType } from "../ronin/ronin.interfaces";
 import { getAccessToken, getMissionStatRoninAddress, getMMRInfoByRoninAddresses, getSLPInfoByRoninAddresses, getTotalSLPByRonin } from "../ronin/ronin.service";
 import { Accumulated_SLP, DailyStats, DailyStatusReport, Scholar } from "../scholars/scholars.interface";
 import { addAccumulatedSLP, dailyStatusReport } from "../scholars/scholars.repository";
-import { addDailyStats, getDailySLPByRoninAddress, getDailyStatusReport, getScholars, toRoninAddress } from "../scholars/scholars.service";
+import { addDailyStats, getDailySLPByRoninAddress, getDailyStats, getDailyStatusReport, getScholars, toRoninAddress } from "../scholars/scholars.service";
 import { MethodResponse } from "../shared/shared.interfaces";
 import { decryptKey, isProduction, toClientId } from "../shared/shared.service";
 import { DailyResult, EventTypes, IWorker } from "./poller.interface";
@@ -95,6 +95,8 @@ export class EventPoller extends EventEmitter implements IWorker {
                     const dailyStats: DailyStats = {
                         scholarid: scholar.id,
                         roninaddress: scholar.roninaddress,
+                        name: scholar.name,
+                        discordid: scholar.discordid,
                         totalslp: SLPInfo["total"],
                         currentrank: MMRInfo["rank"],
                         elo: MMRInfo["elo"],
@@ -117,7 +119,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                             dailyStats.lasttotalwincount = pvp?.progress;
                         }
                     }
-                    const result = await addDailyStats(dailyStats);
+                    const result = !(await isProduction()) ? { success: true } : await addDailyStats(dailyStats);
                     if (result.success) {
                         console.log(`Successfully fetched daily status for ${scholar.name} - ${scholar.roninaddress}`);
                     }
@@ -141,18 +143,19 @@ export class EventPoller extends EventEmitter implements IWorker {
         this.on(EventTypes.ReadyForReport, async () => {
             try {
                 console.log('here is your daily report');
-                // const dailyStatusReports = await getDailyStatusReport();
-                // await Promise.all(dailyStatusReports.map(async (dailyStatusReport: DailyStatusReport) => {
-                //     //  Send message
-                //     console.log(`${dailyStatusReport.name}, ${dailyStatusReport.farmedslpfromyesterday}`);
-                //     await this.sendMessageToAchievements(`Hey ${this.toDiscordMentionByUserId(dailyStatusReport.discordid)}. You farmed ${dailyStatusReport.farmedslpfromyesterday} SLPs today.`)
-                // })).then((result: any) => {
-                //     console.log(`Completed today's Report.`);
-                //     this.poll(`${process.env.pollingInterval}`);
-                // }).catch((error) => {
-                //     console.log(`Unable to compose daily report...`, error);
-                //     this.sendMessageToAchievements(`I'm failing master. Please check the logs.`);
-                // });
+                const dailyStatusReports = await getDailyStats();
+                console.log(dailyStatusReports);
+                await Promise.all(dailyStatusReports.map(async (dailyStatusReport: DailyStats) => {
+                    //  Send message
+                    console.log(`${dailyStatusReport.name}, ${dailyStatusReport.totalslp}`);
+                    await this.sendMessageToAchievements(`Hey ${this.toDiscordMentionByUserId(dailyStatusReport.discordid)}. You farmed ${dailyStatusReport.totalslp} SLPs today.`)
+                })).then((result: any) => {
+                    console.log(`Completed today's Report.`);
+                    this.poll(`${process.env.pollingInterval}`);
+                }).catch((error) => {
+                    console.log(`Unable to compose daily report...`, error);
+                    this.sendMessageToAchievements(`I'm failing master. Please check the logs.`);
+                });
             } catch (error) {
                 console.log(`EventTypes.ReadyForReport ${error}`);
             }

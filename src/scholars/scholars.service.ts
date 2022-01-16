@@ -5,7 +5,7 @@
 
 import { MethodResponse } from "../shared/shared.interfaces";
 import { DailyStats, DailyStatusReport, Scholar } from "./scholars.interface";
-import { listScholars, dailySLPByRoninAddress, dailyStatusReport, executeQuery } from "./scholars.repository";
+import { listScholars, dailySLPByRoninAddress, dailyStatusReport, executeQuery, fetchDailyStats } from "./scholars.repository";
 
 /**
  * Call Repository
@@ -30,6 +30,16 @@ export const getDailyStatusReport = async (): Promise<DailyStatusReport[]> => {
   try {
     const result = await dailyStatusReport();
     const rowData = <DailyStatusReport[]>result.rows;
+    return rowData;
+  } catch (error) {
+    return [];
+  }
+}
+
+export const getDailyStats = async (): Promise<DailyStats[]> => {
+  try {
+    const result = await fetchDailyStats();
+    const rowData = <DailyStats[]>result.rows;
     return rowData;
   } catch (error) {
     return [];

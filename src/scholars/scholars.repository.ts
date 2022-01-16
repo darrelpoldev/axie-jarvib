@@ -151,6 +151,37 @@ export const executeQuery = async (query: string, params?: any[]) => {
     return methodResponse;
   }
 }
+
+export const fetchDailyStats = async () => {
+  const psqlClient = getPostgresClient();
+  try {
+    await psqlClient.connect();
+    const result = await psqlClient.query(
+      `
+      SELECT 
+      (SELECT dailyStats.totalslp - lag(dailyStats.totalslp, 1, 0) OVER (order by dailyStats.created_on) as result
+      FROM daily_stats as dailyStats 
+      WHERE dailyStats.roninAddress = scholars.roninAddress 
+      ORDER BY dailyStats."created_on" DESC LIMIT 1) AS totalslp, 
+      (select dailyStats.elo FROM daily_stats as dailyStats WHERE dailyStats.roninAddress = scholars.roninAddress group by dailyStats."created_on", dailyStats.elo ORDER BY dailyStats."created_on" limit 1) as elo,
+      (select dailyStats.currentrank FROM daily_stats as dailyStats WHERE dailyStats.roninAddress = scholars.roninAddress group by dailyStats."created_on", dailyStats.currentrank ORDER BY dailyStats."created_on" limit 1) as currentrank,
+      (select dailyStats.lasttotalwincount FROM daily_stats as dailyStats WHERE dailyStats.roninAddress = scholars.roninAddress group by dailyStats."created_on", dailyStats.lasttotalwincount ORDER BY dailyStats."created_on" limit 1) as lasttotalwincount,
+      scholars.id as scholarid,
+      scholars.name,
+      scholars.discordid, 
+      scholars.roninaddress
+      FROM scholars as scholars
+      ORDER BY totalslp DESC
+      `
+    );
+    return result;
+  } catch (err) {
+    console.log(err);
+    return false;
+  } finally {
+    await psqlClient.end();
+  }
+}
 /**
  * Service Methods
  */

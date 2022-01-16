@@ -64,15 +64,13 @@ CREATE TABLE daily_stats (
 -- (2, 'ronin:1e9d7412e75d4d89df9102f1bf796d86b0ade73f', 3375, current_timestamp);
 
 -- INSERT INTO scholars(roninaddress, name, discordid, created_on) VALUES
+-- ('ronin:2a19fe1c90655cd6ffadddc4e2c8c4508f12f1a1', 'Joseph', '645660043999445003', current_timestamp),
 -- ('ronin:55cce35326ba3ae2f27c3976dfbb8aa10d354407', 'Jampot', '250629138862440448', current_timestamp),
 -- ('ronin:1e9d7412e75d4d89df9102f1bf796d86b0ade73f', 'Ichiman', '543694609159684106', current_timestamp),
--- ('ronin:7a5c0eb33f1657992c5d8eddf658ca283933df46', 'Karim', '902495831842770944', current_timestamp),
 -- ('ronin:723d07f4547062b95c838270b3e8108c2b636764', 'Vince', '727916878890270860', current_timestamp),
 -- ('ronin:cdb51e43ebd19f669ec456a049e621d802fa9034', 'Dan', '375344434121801729', current_timestamp),
 -- ('ronin:c6785bde8faf553f9195fea6bfb64d4d9d00ef17', 'Ian', '763936451276570684', current_timestamp),
--- ('ronin:eb2d392eff8758468cc42d85b3698f30fcd72866', 'JanJan', '705131604267499550', current_timestamp),
 -- ('ronin:b31f4e1809d204fa764cdc7935a6e8072a4e7e6a', 'Aljon', '248055589832228864', current_timestamp);
-
 
 -- get 2 latest records;
 -- SELECT * 
