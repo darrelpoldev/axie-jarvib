@@ -144,7 +144,6 @@ export class EventPoller extends EventEmitter implements IWorker {
             try {
                 console.log('here is your daily report');
                 const dailyStatusReports = await getDailyStats();
-                console.log(dailyStatusReports);
                 await Promise.all(dailyStatusReports.map(async (dailyStatusReport: DailyStats) => {
                     //  Send message
                     console.log(`${dailyStatusReport.name}, ${dailyStatusReport.totalslp}`);
