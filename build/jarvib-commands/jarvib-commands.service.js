@@ -41,6 +41,8 @@ var poller_service_1 = require("../poller/poller.service");
 var ronin_service_1 = require("../ronin/ronin.service");
 var shared_service_1 = require("../shared/shared.service");
 var jarvib_commands_interfaces_1 = require("./jarvib-commands.interfaces");
+var discord_commands_service_1 = require("../discord-commands/discord-commands.service");
+var schedule = require('node-schedule');
 /**
  * Data Model Interfaces
  * Libraries
@@ -89,9 +91,13 @@ var startListening = function () { return __awaiter(void 0, void 0, void 0, func
             console.log('Ready!');
             var engine = new poller_service_1.EventPoller(discordClient);
             engine.start();
+            //  Please uncomment this to use JobScheduler in the future.
+            // const scheduler = new JobScheduler(discordClient);
+            // scheduler.start();
+            // scheduler.startSelfPingJob();
         });
         discordClient.on('messageCreate', function (message) { return __awaiter(void 0, void 0, void 0, function () {
-            var commandBody, args, command, options, roninAddress, mmrDetails;
+            var commandBody, args, command, options, username, roninAddress, mmrDetails, stats;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -103,6 +109,12 @@ var startListening = function () { return __awaiter(void 0, void 0, void 0, func
                         args = commandBody.split(' ');
                         command = args[1];
                         options = args[2];
+                        //  if command empty or help show available commands
+                        if (command === undefined || command === "help") {
+                            message.reply(jarvib_commands_interfaces_1.help);
+                            return [2 /*return*/];
+                        }
+                        username = message.author.username + "#" + message.author.discriminator;
                         if (!(command.toUpperCase() === jarvib_commands_interfaces_1.Commands.PING)) return [3 /*break*/, 1];
                         message.reply("Hello **" + message.author.tag + "**. What can I do for you?");
                         return [3 /*break*/, 5];
@@ -120,7 +132,22 @@ var startListening = function () { return __awaiter(void 0, void 0, void 0, func
                         mmrDetails = _a.sent();
                         if (!mmrDetails)
                             message.reply("Unable to fetch MMR details");
-                        message.reply("Your current MMR is " + mmrDetails.ELO + " and your current ranking is " + mmrDetails.rank);
+                        stats = discord_commands_service_1.createMessageWithEmbeded({
+                            fields: [
+                                {
+                                    name: '🚀 MMR',
+                                    value: "" + mmrDetails.ELO,
+                                    inline: true,
+                                },
+                                {
+                                    name: '👑 rank',
+                                    value: "" + mmrDetails.rank,
+                                    inline: true,
+                                }
+                            ],
+                            footer: { text: "get good " + username }
+                        });
+                        message.reply({ embeds: [stats] });
                         return [3 /*break*/, 5];
                     case 4:
                         message.reply("The fvck are you saying?");

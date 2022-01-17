@@ -14,6 +14,7 @@ export interface Scholar {
   roninaddress: string,
   name: string,
   discordid: string,
+  encryptedprivatekey?: string,
   createdOn: string
 }
 
@@ -31,4 +32,16 @@ export interface DailyStatusReport {
   name: string,
   discordid: string,
   roninaddress: string,
+}
+
+export interface DailyStats {
+  scholarid: number,
+  name: string,
+  discordid: string,
+  roninaddress: string,
+  totalslp: number,
+  elo: number,
+  currentrank: number,
+  lasttotalwincount?: number,
+  createdon?: string
 }

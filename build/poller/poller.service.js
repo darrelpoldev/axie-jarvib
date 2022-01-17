@@ -59,8 +59,9 @@ exports.EventPoller = void 0;
 var discord_js_1 = require("discord.js");
 var events_1 = require("events");
 var app_health_service_1 = require("../app-health/app-health.service");
+var discord_commands_service_1 = require("../discord-commands/discord-commands.service");
+var ronin_interfaces_1 = require("../ronin/ronin.interfaces");
 var ronin_service_1 = require("../ronin/ronin.service");
-var scholars_repository_1 = require("../scholars/scholars.repository");
 var scholars_service_1 = require("../scholars/scholars.service");
 var shared_service_1 = require("../shared/shared.service");
 var poller_interface_1 = require("./poller.interface");
@@ -101,7 +102,7 @@ var EventPoller = /** @class */ (function (_super) {
                             localDateTime = new Date(utcDate.toString());
                             currentHour = localDateTime.getHours();
                             if ((currentHour == hourToNotify || process.env.environment != "prod") && !sent) {
-                                channel = this.discordClient.channels.cache.get('862115684820844544');
+                                channel = this.discordClient.channels.cache.get("" + process.env.discordChannelId);
                                 if (channel === null || channel === void 0 ? void 0 : channel.isText()) {
                                     if (shared_service_1.isProduction()) {
                                         channel.send("Hey <@&" + axieScholarRoleId + ">(s) here's your daily reset alert. Brought to you by your BOT police, JARVIB.");
@@ -114,131 +115,199 @@ var EventPoller = /** @class */ (function (_super) {
                             else if (currentHour != hourToNotify) {
                                 sent = false;
                                 console.log('resetting sent value to false at...', localDateTime);
+                                this.poll("" + process.env.pollingInterval);
                             }
                             else {
                                 console.log('checking at...', localDateTime);
+                                this.poll("" + process.env.pollingInterval);
                             }
                             app_health_service_1.selfPing();
                         }
                         catch (error) {
                             console.error("Error on " + poller_interface_1.EventTypes.TICK, error);
                         }
-                        this.poll("" + process.env.pollingInterval);
                         return [2 /*return*/];
                     });
                 }); });
                 this.on(poller_interface_1.EventTypes.DailyReset, function () { return __awaiter(_this, void 0, void 0, function () {
-                    var scholars_1, collectAccumulatedSLP, error_1;
+                    var defaultRoninAccountAddress, _a, defaultRoninAccountPrivateKey, accessTokenResponse_1, scholars, SLPDetails_1, MMRDetails_1, error_1;
+                    var _this = this;
+                    return __generator(this, function (_b) {
+                        switch (_b.label) {
+                            case 0:
+                                _b.trys.push([0, 7, , 8]);
+                                _a = "";
+                                return [4 /*yield*/, shared_service_1.toClientId("" + process.env.roninAccountAddress)];
+                            case 1:
+                                defaultRoninAccountAddress = _a + (_b.sent());
+                                defaultRoninAccountPrivateKey = "" + process.env.roninAccountPrivateKey;
+                                return [4 /*yield*/, ronin_service_1.getAccessToken(defaultRoninAccountAddress, defaultRoninAccountPrivateKey)];
+                            case 2:
+                                accessTokenResponse_1 = _b.sent();
+                                if (!accessTokenResponse_1.data)
+                                    return [2 /*return*/]; // Can we avoid these kind of defense?
+                                return [4 /*yield*/, scholars_service_1.getScholars()];
+                            case 3:
+                                scholars = _b.sent();
+                                if (scholars.length == 0)
+                                    return [2 /*return*/]; // Can we avoid these kind of defense?
+                                return [4 /*yield*/, ronin_service_1.getSLPInfoByRoninAddresses(scholars.map(function (scholar) { return scholar.roninaddress; }))];
+                            case 4:
+                                SLPDetails_1 = _b.sent();
+                                return [4 /*yield*/, ronin_service_1.getMMRInfoByRoninAddresses(scholars.map(function (scholar) { return scholar.roninaddress; }))];
+                            case 5:
+                                MMRDetails_1 = _b.sent();
+                                return [4 /*yield*/, Promise.all(scholars.map(function (scholar) { return __awaiter(_this, void 0, void 0, function () {
+                                        var clientAddress, SLPInfo, MMRInfo, dailyStats, scholarPrivateKey, scholarAccessToken, quests, quest, dailyQuest, missions, pvp, result;
+                                        return __generator(this, function (_a) {
+                                            switch (_a.label) {
+                                                case 0: return [4 /*yield*/, shared_service_1.toClientId(scholar.roninaddress)];
+                                                case 1:
+                                                    clientAddress = _a.sent();
+                                                    SLPInfo = SLPDetails_1.data.filter(function (detail) { return detail["client_id"] == clientAddress; }).shift();
+                                                    MMRInfo = MMRDetails_1.data.filter(function (detail) { return detail["client_id"] == clientAddress; }).shift();
+                                                    dailyStats = {
+                                                        scholarid: scholar.id,
+                                                        roninaddress: scholar.roninaddress,
+                                                        name: scholar.name,
+                                                        discordid: scholar.discordid,
+                                                        totalslp: SLPInfo["total"],
+                                                        currentrank: MMRInfo["rank"],
+                                                        elo: MMRInfo["elo"],
+                                                        lasttotalwincount: 0
+                                                    };
+                                                    return [4 /*yield*/, shared_service_1.decryptKey(scholar.encryptedprivatekey || "")];
+                                                case 2:
+                                                    scholarPrivateKey = _a.sent();
+                                                    if (!scholarPrivateKey) return [3 /*break*/, 5];
+                                                    return [4 /*yield*/, ronin_service_1.getAccessToken(clientAddress, scholarPrivateKey)];
+                                                case 3:
+                                                    scholarAccessToken = _a.sent();
+                                                    if (!accessTokenResponse_1.data) {
+                                                        console.log("Unable to fetch scholar's accesstoken.");
+                                                        return [2 /*return*/];
+                                                    }
+                                                    ; // Can we avoid these kind of defense?
+                                                    return [4 /*yield*/, ronin_service_1.getMissionStatsByRoninAddress(scholar.roninaddress, scholarAccessToken.data)];
+                                                case 4:
+                                                    quests = _a.sent();
+                                                    if (quests.data) {
+                                                        quest = quests.data;
+                                                        dailyQuest = quest.filter(function (q) { return q.quest_type === ronin_interfaces_1.QuestType.daily; }).shift();
+                                                        missions = dailyQuest === null || dailyQuest === void 0 ? void 0 : dailyQuest.missions;
+                                                        pvp = missions === null || missions === void 0 ? void 0 : missions.filter(function (m) { return m.mission_type === ronin_interfaces_1.MissionType.pvp; }).shift();
+                                                        dailyStats.lasttotalwincount = pvp === null || pvp === void 0 ? void 0 : pvp.progress;
+                                                    }
+                                                    _a.label = 5;
+                                                case 5: return [4 /*yield*/, scholars_service_1.addDailyStats(dailyStats)];
+                                                case 6:
+                                                    result = _a.sent();
+                                                    if (result.success) {
+                                                        console.log("Successfully fetched daily status for " + scholar.name + " - " + scholar.roninaddress);
+                                                    }
+                                                    else {
+                                                        this.sendMessageToAchievements("There are some problem fetching daily status for " + scholar.name + " - " + scholar.roninaddress + ". Please help.");
+                                                        console.log("Unable to save daily status for " + scholar.name + " - " + scholar.roninaddress);
+                                                    }
+                                                    return [2 /*return*/];
+                                            }
+                                        });
+                                    }); })).then(function () {
+                                        console.log("Completed consolidating daily statistics...");
+                                        _this.emit(poller_interface_1.EventTypes.ReadyForReport);
+                                    }).catch(function (err) {
+                                        _this.sendMessageToAchievements("Master, I'm unable to consolidate daily status. Please help.");
+                                        console.log("Unable to collect daily stats. " + err);
+                                    })];
+                            case 6:
+                                _b.sent();
+                                return [3 /*break*/, 8];
+                            case 7:
+                                error_1 = _b.sent();
+                                console.log("Unable to compose daily report...", error_1);
+                                this.sendMessageToAchievements("I'm failing master. Please check the logs.");
+                                return [3 /*break*/, 8];
+                            case 8: return [2 /*return*/];
+                        }
+                    });
+                }); });
+                this.on(poller_interface_1.EventTypes.ReadyForReport, function () { return __awaiter(_this, void 0, void 0, function () {
+                    var dailyStatusReports, utcDate_1, error_2;
                     var _this = this;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
                             case 0:
-                                _a.trys.push([0, 2, , 3]);
-                                return [4 /*yield*/, scholars_service_1.getScholars()];
+                                _a.trys.push([0, 3, , 4]);
+                                console.log('here is your daily report');
+                                return [4 /*yield*/, scholars_service_1.getDailyStats()];
                             case 1:
-                                scholars_1 = _a.sent();
-                                if (scholars_1.length == 0)
-                                    return [2 /*return*/];
-                                collectAccumulatedSLP = new Promise(function (resolve, reject) {
-                                    scholars_1.forEach(function (scholar, index, scholarList) { return __awaiter(_this, void 0, void 0, function () {
-                                        var roninAddress, scholarDetails, scholarDetail, accumulated_SLP, result, _a;
-                                        var _b;
-                                        return __generator(this, function (_c) {
-                                            switch (_c.label) {
+                                dailyStatusReports = _a.sent();
+                                utcDate_1 = new Date();
+                                return [4 /*yield*/, Promise.all(dailyStatusReports.map(function (dailyStatusReport, index, reportList) { return __awaiter(_this, void 0, void 0, function () {
+                                        var embededMessage;
+                                        return __generator(this, function (_a) {
+                                            switch (_a.label) {
                                                 case 0:
-                                                    roninAddress = scholar.roninaddress;
-                                                    return [4 /*yield*/, ronin_service_1.getTotalSLPByRonin(roninAddress)];
+                                                    //  Send message
+                                                    console.log(dailyStatusReport.name + ", " + dailyStatusReport.totalslp);
+                                                    embededMessage = discord_commands_service_1.createMessageWithEmbeded({
+                                                        title: "" + dailyStatusReport.name,
+                                                        fields: [
+                                                            {
+                                                                name: ":moneybag: Total SLP",
+                                                                value: "" + dailyStatusReport.totalslp,
+                                                                inline: true,
+                                                            },
+                                                            {
+                                                                name: ":white_check_mark: Total Wins",
+                                                                value: "" + dailyStatusReport.lasttotalwincount,
+                                                                inline: true,
+                                                            },
+                                                            {
+                                                                name: ':rocket: MMR',
+                                                                value: "" + dailyStatusReport.elo,
+                                                                inline: true,
+                                                            },
+                                                            {
+                                                                name: ':crown: Rank',
+                                                                value: "" + dailyStatusReport.currentrank,
+                                                                inline: true,
+                                                            },
+                                                            {
+                                                                name: ':date: Timestamp',
+                                                                value: "" + utcDate_1.toString(),
+                                                                inline: true,
+                                                            },
+                                                            {
+                                                                name: ':receipt: Ronin Address',
+                                                                value: "" + dailyStatusReport.roninaddress,
+                                                                inline: true,
+                                                            }
+                                                        ],
+                                                        footer: { text: index == (reportList.length - 1) ? "You're the noob of the day! Git good!" : "Thanks for playing. Keep it up!" }
+                                                    });
+                                                    return [4 /*yield*/, this.sendMessageToAchievements({ embeds: [embededMessage] })];
                                                 case 1:
-                                                    scholarDetails = _c.sent();
-                                                    if (!scholarDetails)
-                                                        return [2 /*return*/]; // This has to be moved or handled somewhere.
-                                                    scholarDetail = scholarDetails.shift();
-                                                    _b = {};
-                                                    return [4 /*yield*/, scholars_service_1.toRoninAddress(scholarDetail["client_id"])];
-                                                case 2:
-                                                    accumulated_SLP = (_b.roninAddress = _c.sent(),
-                                                        _b.scholarId = scholar.id,
-                                                        _b.total = scholarDetail["total"],
-                                                        _b);
-                                                    if (!!shared_service_1.isProduction()) return [3 /*break*/, 3];
-                                                    _a = true;
-                                                    return [3 /*break*/, 5];
-                                                case 3: return [4 /*yield*/, scholars_repository_1.addAccumulatedSLP(accumulated_SLP)];
-                                                case 4:
-                                                    _a = _c.sent();
-                                                    _c.label = 5;
-                                                case 5:
-                                                    result = _a;
-                                                    if (result) {
-                                                        console.log("Successfully fetched latest record for " + roninAddress);
-                                                    }
-                                                    if (index === scholarList.length - 1)
-                                                        resolve();
+                                                    _a.sent();
                                                     return [2 /*return*/];
                                             }
                                         });
-                                    }); });
-                                });
-                                collectAccumulatedSLP.then(function (x) {
-                                    //  Send message link to summary
-                                    console.log("Completed collecting accumulated SLPs...");
-                                    _this.emit(poller_interface_1.EventTypes.ReadyForReport, scholars_1);
-                                });
-                                collectAccumulatedSLP.catch(function (err) {
-                                    _this.sendMessageToAchievements("I'm failing master. Please check the logs.");
-                                    console.log("Unable to collect accumulated SLPs. " + err);
-                                });
-                                return [3 /*break*/, 3];
+                                    }); })).then(function (result) {
+                                        console.log("Completed today's Report.");
+                                        _this.poll("" + process.env.pollingInterval);
+                                    }).catch(function (error) {
+                                        console.log("Unable to compose daily report...", error);
+                                        _this.sendMessageToAchievements("I'm failing master. Please check the logs.");
+                                    })];
                             case 2:
-                                error_1 = _a.sent();
-                                console.log("Unable to compose daily report...", error_1);
-                                this.sendMessageToAchievements("I'm failing master. Please check the logs.");
-                                return [3 /*break*/, 3];
-                            case 3: return [2 /*return*/];
+                                _a.sent();
+                                return [3 /*break*/, 4];
+                            case 3:
+                                error_2 = _a.sent();
+                                console.log("EventTypes.ReadyForReport " + error_2);
+                                return [3 /*break*/, 4];
+                            case 4: return [2 /*return*/];
                         }
-                    });
-                }); });
-                this.on(poller_interface_1.EventTypes.ReadyForReport, function (scholars) { return __awaiter(_this, void 0, void 0, function () {
-                    var dailyResults_1, promise;
-                    var _this = this;
-                    return __generator(this, function (_a) {
-                        try {
-                            dailyResults_1 = [];
-                            promise = new Promise(function (resolve, reject) {
-                                scholars.forEach(function (scholar, index, scholarList) { return __awaiter(_this, void 0, void 0, function () {
-                                    var result, record, dailyResult;
-                                    return __generator(this, function (_a) {
-                                        switch (_a.label) {
-                                            case 0: return [4 /*yield*/, scholars_service_1.getDailySLPByRoninAddress(scholar.roninaddress)];
-                                            case 1:
-                                                result = _a.sent();
-                                                record = result.rows[0];
-                                                dailyResult = {
-                                                    dailySLP: record.result,
-                                                    roninAddress: scholar.roninaddress
-                                                };
-                                                //  Send message
-                                                return [4 /*yield*/, this.sendMessageToAchievements("Hey " + this.toDiscordMentionByUserId(scholar.discordid) + ". You farmed " + dailyResult.dailySLP + " SLPs today.")];
-                                            case 2:
-                                                //  Send message
-                                                _a.sent();
-                                                dailyResults_1.push(dailyResult);
-                                                if (index === scholarList.length - 1)
-                                                    resolve();
-                                                return [2 /*return*/];
-                                        }
-                                    });
-                                }); });
-                            });
-                            promise.then(function (x) {
-                                //  Send message link to summary
-                                console.log("Completed today's Report.");
-                            });
-                        }
-                        catch (error) {
-                            console.log("EventTypes.ReadyForReport " + error);
-                        }
-                        return [2 /*return*/];
                     });
                 }); });
                 return [2 /*return*/];
@@ -252,17 +321,20 @@ var EventPoller = /** @class */ (function (_super) {
         var _this = this;
         setTimeout(function () { return _this.emit(poller_interface_1.EventTypes.TICK); }, parseInt("" + interval));
     };
-    EventPoller.prototype.sendMessageToAchievements = function (message) {
+    EventPoller.prototype.sendMessageToAchievements = function (messageOrEmbed) {
         return __awaiter(this, void 0, void 0, function () {
             var channel;
             return __generator(this, function (_a) {
-                if (!shared_service_1.isProduction())
-                    return [2 /*return*/];
-                channel = this.discordClient.channels.cache.get("" + process.env.discordChannelId);
-                if (channel === null || channel === void 0 ? void 0 : channel.isText()) {
-                    channel.send(message);
+                switch (_a.label) {
+                    case 0:
+                        channel = this.discordClient.channels.cache.get("" + process.env.discordChannelId);
+                        if (!(channel === null || channel === void 0 ? void 0 : channel.isText())) return [3 /*break*/, 2];
+                        return [4 /*yield*/, channel.send(messageOrEmbed)];
+                    case 1:
+                        _a.sent();
+                        _a.label = 2;
+                    case 2: return [2 /*return*/];
                 }
-                return [2 /*return*/];
             });
         });
     };
