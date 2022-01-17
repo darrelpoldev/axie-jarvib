@@ -35,13 +35,31 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMMRbyRoninAddress = exports.getTotalSLPByRonin = void 0;
+exports.getMissionStatRoninAddress = exports.submitSignature = exports.getRandomMessage = exports.getAccessToken = exports.fetchData = exports.getData = exports.getMMRbyRoninAddress = exports.getMMRInfoByRoninAddresses = exports.getSLPInfoByRoninAddresses = exports.getTotalSLPByRonin = void 0;
+var web3_1 = __importDefault(require("web3"));
+var shared_service_1 = require("../shared/shared.service");
+var web3 = new web3_1.default();
+var axiosRetry = require('axios-retry');
 /**
  * Data Model Interfaces
  * Libraries
  */
 var axios = require('axios');
+axiosRetry(axios, {
+    retries: 3,
+    retryDelay: function (retryCount) {
+        console.log("retry attempt: " + retryCount);
+        return retryCount * 2000; // time interval between retries
+    },
+    retryCondition: function (error) {
+        // if retry condition is not specified, by default idempotent requests are retried
+        return error.response.status === 503;
+    }
+});
 /**
  * Call Repository
  */
@@ -69,6 +87,74 @@ var getTotalSLPByRonin = function (roninAddress) { return __awaiter(void 0, void
     });
 }); };
 exports.getTotalSLPByRonin = getTotalSLPByRonin;
+var getSLPInfoByRoninAddresses = function (roninAddresses, authorization) { return __awaiter(void 0, void 0, void 0, function () {
+    var methodResponse, roninResponse, methodResponse_1, error_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                methodResponse = {
+                    data: "",
+                    success: false
+                };
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 3, , 4]);
+                return [4 /*yield*/, exports.getData(process.env.roninSLPEndpoint + "/" + roninAddresses.toString(), authorization)];
+            case 2:
+                roninResponse = _a.sent();
+                methodResponse_1 = {
+                    data: roninResponse,
+                    success: true
+                };
+                return [2 /*return*/, methodResponse_1];
+            case 3:
+                error_1 = _a.sent();
+                methodResponse.errorDetails = {
+                    message: "Unable to get AccessToken",
+                    stack: error_1
+                };
+                return [2 /*return*/, methodResponse];
+            case 4: return [2 /*return*/];
+        }
+    });
+}); };
+exports.getSLPInfoByRoninAddresses = getSLPInfoByRoninAddresses;
+var getMMRInfoByRoninAddresses = function (roninAddresses, authorization) { return __awaiter(void 0, void 0, void 0, function () {
+    var methodResponse, roninResponse, playerMMRInfos, error_2;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                methodResponse = {
+                    data: "",
+                    success: false
+                };
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 3, , 4]);
+                return [4 /*yield*/, exports.getData(process.env.roninMMREndpoint + "/" + roninAddresses.toString(), authorization)];
+            case 2:
+                roninResponse = _a.sent();
+                if (roninResponse) {
+                    playerMMRInfos = roninResponse.map(function (itemInfo) {
+                        var playerMMR = itemInfo.items[1];
+                        return playerMMR;
+                    });
+                    methodResponse.data = playerMMRInfos;
+                    methodResponse.success = true;
+                }
+                return [2 /*return*/, methodResponse];
+            case 3:
+                error_2 = _a.sent();
+                methodResponse.errorDetails = {
+                    message: "Unable to get AccessToken",
+                    stack: error_2
+                };
+                return [2 /*return*/, methodResponse];
+            case 4: return [2 /*return*/];
+        }
+    });
+}); };
+exports.getMMRInfoByRoninAddresses = getMMRInfoByRoninAddresses;
 var getMMRbyRoninAddress = function (roninAddress) { return __awaiter(void 0, void 0, void 0, function () {
     var result, response, items, data, mmrDetails, MMR, errorMessage_2;
     return __generator(this, function (_a) {
@@ -107,3 +193,157 @@ var getMMRbyRoninAddress = function (roninAddress) { return __awaiter(void 0, vo
     });
 }); };
 exports.getMMRbyRoninAddress = getMMRbyRoninAddress;
+var getData = function (endpoint, authorization) { return __awaiter(void 0, void 0, void 0, function () {
+    var _a, data, status;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0: return [4 /*yield*/, axios.get(endpoint, shared_service_1.axieRequiredHeaders(authorization))];
+            case 1:
+                _a = _b.sent(), data = _a.data, status = _a.status;
+                if (status < 200 && status >= 300) {
+                    throw Error('Axie Infinity API have a problem');
+                }
+                return [2 /*return*/, data];
+        }
+    });
+}); };
+exports.getData = getData;
+var fetchData = function (postData) { return __awaiter(void 0, void 0, void 0, function () {
+    var url, _a, data, status;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                url = "" + process.env.axieGQLEndpoint;
+                return [4 /*yield*/, axios.post(url, postData, shared_service_1.axieRequiredHeaders())];
+            case 1:
+                _a = _b.sent(), data = _a.data, status = _a.status;
+                if (status < 200 && status >= 300) {
+                    throw Error('Axie Infinity API have a problem');
+                }
+                return [2 /*return*/, data];
+        }
+    });
+}); };
+exports.fetchData = fetchData;
+var getAccessToken = function (roninAddress, roninPrivateKey) { return __awaiter(void 0, void 0, void 0, function () {
+    var methodResponse, roninAccountAddress, roninAccountPrivateKey, randomMessageResponse, accessToken, methodResponse_2, error_3;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                methodResponse = {
+                    data: "",
+                    success: false
+                };
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 4, , 5]);
+                roninAccountAddress = roninAddress;
+                roninAccountPrivateKey = roninPrivateKey;
+                return [4 /*yield*/, exports.getRandomMessage()];
+            case 2:
+                randomMessageResponse = _a.sent();
+                return [4 /*yield*/, exports.submitSignature(roninAccountAddress, roninAccountPrivateKey, randomMessageResponse.data)];
+            case 3:
+                accessToken = _a.sent();
+                methodResponse_2 = {
+                    data: accessToken,
+                    success: true
+                };
+                return [2 /*return*/, methodResponse_2];
+            case 4:
+                error_3 = _a.sent();
+                methodResponse.errorDetails = {
+                    message: "Unable to get AccessToken",
+                    stack: error_3
+                };
+                return [2 /*return*/, methodResponse];
+            case 5: return [2 /*return*/];
+        }
+    });
+}); };
+exports.getAccessToken = getAccessToken;
+var getRandomMessage = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var response, err_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                return [4 /*yield*/, exports.fetchData({
+                        'operationName': "CreateRandomMessage",
+                        'query': "mutation CreateRandomMessage {\n  createRandomMessage\n}\n",
+                        'variables': {}
+                    })];
+            case 1:
+                response = _a.sent();
+                return [2 /*return*/, {
+                        status: true,
+                        data: response.data.createRandomMessage
+                    }];
+            case 2:
+                err_1 = _a.sent();
+                console.log(err_1);
+                return [2 /*return*/, {
+                        data: '',
+                        status: false
+                    }];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+exports.getRandomMessage = getRandomMessage;
+var submitSignature = function (accountAddress, privateKey, randMessage) { return __awaiter(void 0, void 0, void 0, function () {
+    var hexSignature, signature, response, err_2;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                hexSignature = web3.eth.accounts.sign(randMessage, privateKey);
+                signature = hexSignature['signature'];
+                return [4 /*yield*/, exports.fetchData({
+                        "operationName": "CreateAccessTokenWithSignature",
+                        "variables": { "input": { "mainnet": shared_service_1.mainnet, "owner": accountAddress, "message": randMessage, "signature": signature } },
+                        "query": "mutation CreateAccessTokenWithSignature($input: SignatureInput!) {\n  createAccessTokenWithSignature(input: $input) {\n    newAccount\n    result\n    accessToken\n    __typename\n  }\n}\n"
+                    })];
+            case 1:
+                response = _a.sent();
+                return [2 /*return*/, response.data.createAccessTokenWithSignature.accessToken];
+            case 2:
+                err_2 = _a.sent();
+                console.log(err_2);
+                return [2 /*return*/, false];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+exports.submitSignature = submitSignature;
+var getMissionStatRoninAddress = function (roninAddress, accessToken) { return __awaiter(void 0, void 0, void 0, function () {
+    var methodResponse, response, quests, errorMessage_3;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                methodResponse = {
+                    data: "",
+                    success: false
+                };
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 3, 4, 5]);
+                if (roninAddress == "")
+                    return [2 /*return*/, methodResponse];
+                return [4 /*yield*/, exports.getData(process.env.roninMissionStatsEndpoint + "/" + roninAddress, accessToken)];
+            case 2:
+                response = _a.sent();
+                quests = response["items"];
+                methodResponse.data = quests;
+                methodResponse.success = true;
+                return [3 /*break*/, 5];
+            case 3:
+                errorMessage_3 = _a.sent();
+                console.log("getMissionStatRoninAddress " + errorMessage_3);
+                return [3 /*break*/, 5];
+            case 4: return [2 /*return*/, methodResponse];
+            case 5: return [2 /*return*/];
+        }
+    });
+}); };
+exports.getMissionStatRoninAddress = getMissionStatRoninAddress;

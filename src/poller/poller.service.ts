@@ -75,10 +75,6 @@ export class EventPoller extends EventEmitter implements IWorker {
 
         this.on(EventTypes.DailyReset, async () => {
             try {
-                const promiseAllResult: MethodResponse = {
-                    data: "",
-                    success: false
-                }
                 const defaultRoninAccountAddress = `${await toClientId(`${process.env.roninAccountAddress}`)}`;
                 const defaultRoninAccountPrivateKey = `${process.env.roninAccountPrivateKey}`;
                 const accessTokenResponse = await getAccessToken(defaultRoninAccountAddress, defaultRoninAccountPrivateKey);

@@ -3,13 +3,24 @@ import Web3 from "web3";
 import { mainnet, axieRequiredHeaders, toClientId } from "../shared/shared.service";
 import { MethodResponse } from "../shared/shared.interfaces";
 const web3 = new Web3();
+const axiosRetry = require('axios-retry');
 
 /**
  * Data Model Interfaces
  * Libraries
  */
 const axios = require('axios');
-
+axiosRetry(axios, {
+    retries: 3, // number of retries
+    retryDelay: (retryCount: any) => {
+        console.log(`retry attempt: ${retryCount}`);
+        return retryCount * 2000; // time interval between retries
+    },
+    retryCondition: (error: any) => {
+        // if retry condition is not specified, by default idempotent requests are retried
+        return error.response.status === 503;
+    }
+});
 /**
  * Call Repository
  */
