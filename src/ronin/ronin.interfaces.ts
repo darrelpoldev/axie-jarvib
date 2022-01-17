@@ -17,7 +17,7 @@ export interface Missions {
 }
 
 export enum QuestType {
-  quest_type = "daily"
+  daily = "daily"
 }
 
 export enum MissionType {

@@ -196,7 +196,7 @@ export const submitSignature = async (
     }
 };
 
-export const getMissionStatRoninAddress = async (roninAddress: string, accessToken: string) => {
+export const getMissionStatsByRoninAddress = async (roninAddress: string, accessToken: string) => {
     const methodResponse: MethodResponse = {
         data: "",
         success: false
@@ -208,7 +208,7 @@ export const getMissionStatRoninAddress = async (roninAddress: string, accessTok
         methodResponse.data = quests;
         methodResponse.success = true;
     } catch (errorMessage) {
-        console.log(`getMissionStatRoninAddress ${errorMessage}`);
+        console.log(`getMissionStatsByRoninAddress ${errorMessage}`);
     } finally {
         return methodResponse;
     }

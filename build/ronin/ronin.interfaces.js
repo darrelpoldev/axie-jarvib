@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MissionType = exports.QuestType = void 0;
 var QuestType;
 (function (QuestType) {
-    QuestType["quest_type"] = "daily";
+    QuestType["daily"] = "daily";
 })(QuestType = exports.QuestType || (exports.QuestType = {}));
 var MissionType;
 (function (MissionType) {

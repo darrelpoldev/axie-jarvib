@@ -39,7 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMissionStatRoninAddress = exports.submitSignature = exports.getRandomMessage = exports.getAccessToken = exports.fetchData = exports.getData = exports.getMMRbyRoninAddress = exports.getMMRInfoByRoninAddresses = exports.getSLPInfoByRoninAddresses = exports.getTotalSLPByRonin = void 0;
+exports.getMissionStatsByRoninAddress = exports.submitSignature = exports.getRandomMessage = exports.getAccessToken = exports.fetchData = exports.getData = exports.getMMRbyRoninAddress = exports.getMMRInfoByRoninAddresses = exports.getSLPInfoByRoninAddresses = exports.getTotalSLPByRonin = void 0;
 var web3_1 = __importDefault(require("web3"));
 var shared_service_1 = require("../shared/shared.service");
 var web3 = new web3_1.default();
@@ -316,7 +316,7 @@ var submitSignature = function (accountAddress, privateKey, randMessage) { retur
     });
 }); };
 exports.submitSignature = submitSignature;
-var getMissionStatRoninAddress = function (roninAddress, accessToken) { return __awaiter(void 0, void 0, void 0, function () {
+var getMissionStatsByRoninAddress = function (roninAddress, accessToken) { return __awaiter(void 0, void 0, void 0, function () {
     var methodResponse, response, quests, errorMessage_3;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -339,11 +339,11 @@ var getMissionStatRoninAddress = function (roninAddress, accessToken) { return _
                 return [3 /*break*/, 5];
             case 3:
                 errorMessage_3 = _a.sent();
-                console.log("getMissionStatRoninAddress " + errorMessage_3);
+                console.log("getMissionStatsByRoninAddress " + errorMessage_3);
                 return [3 /*break*/, 5];
             case 4: return [2 /*return*/, methodResponse];
             case 5: return [2 /*return*/];
         }
     });
 }); };
-exports.getMissionStatRoninAddress = getMissionStatRoninAddress;
+exports.getMissionStatsByRoninAddress = getMissionStatsByRoninAddress;

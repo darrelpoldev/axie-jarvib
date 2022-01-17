@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import { selfPing } from "../app-health/app-health.service";
 import { createMessageWithEmbeded } from "../discord-commands/discord-commands.service";
 import { MissionType, Quests, QuestType } from "../ronin/ronin.interfaces";
-import { getAccessToken, getMissionStatRoninAddress, getMMRInfoByRoninAddresses, getSLPInfoByRoninAddresses, getTotalSLPByRonin } from "../ronin/ronin.service";
+import { getAccessToken, getMissionStatsByRoninAddress, getMMRInfoByRoninAddresses, getSLPInfoByRoninAddresses, getTotalSLPByRonin } from "../ronin/ronin.service";
 import { Accumulated_SLP, DailyStats, DailyStatusReport, Scholar } from "../scholars/scholars.interface";
 import { addAccumulatedSLP, dailyStatusReport } from "../scholars/scholars.repository";
 import { addDailyStats, getDailySLPByRoninAddress, getDailyStats, getDailyStatusReport, getScholars, toRoninAddress } from "../scholars/scholars.service";
@@ -107,16 +107,16 @@ export class EventPoller extends EventEmitter implements IWorker {
                             return;
                         }; // Can we avoid these kind of defense?
 
-                        const quests: MethodResponse = await getMissionStatRoninAddress(scholar.roninaddress, scholarAccessToken.data);
+                        const quests: MethodResponse = await getMissionStatsByRoninAddress(scholar.roninaddress, scholarAccessToken.data);
                         if (quests.data) {
                             const quest: Quests[] = <Quests[]>quests.data;
-                            const dailyQuest = quest.filter(q => q.quest_type === QuestType.quest_type).shift();
+                            const dailyQuest = quest.filter(q => q.quest_type === QuestType.daily).shift();
                             const missions = dailyQuest?.missions;
                             const pvp = missions?.filter(m => m.mission_type === MissionType.pvp).shift();
                             dailyStats.lasttotalwincount = pvp?.progress;
                         }
                     }
-                    const result = !(await isProduction()) ? { success: true } : await addDailyStats(dailyStats);
+                    const result = await addDailyStats(dailyStats);
                     if (result.success) {
                         console.log(`Successfully fetched daily status for ${scholar.name} - ${scholar.roninaddress}`);
                     }

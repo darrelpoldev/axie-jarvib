@@ -158,12 +158,12 @@ var EventPoller = /** @class */ (function (_super) {
                             case 5:
                                 MMRDetails_1 = _b.sent();
                                 return [4 /*yield*/, Promise.all(scholars.map(function (scholar) { return __awaiter(_this, void 0, void 0, function () {
-                                        var clientAddress, SLPInfo, MMRInfo, dailyStats, scholarPrivateKey, scholarAccessToken, quests, quest, dailyQuest, missions, pvp, result, _a;
-                                        return __generator(this, function (_b) {
-                                            switch (_b.label) {
+                                        var clientAddress, SLPInfo, MMRInfo, dailyStats, scholarPrivateKey, scholarAccessToken, quests, quest, dailyQuest, missions, pvp, result;
+                                        return __generator(this, function (_a) {
+                                            switch (_a.label) {
                                                 case 0: return [4 /*yield*/, shared_service_1.toClientId(scholar.roninaddress)];
                                                 case 1:
-                                                    clientAddress = _b.sent();
+                                                    clientAddress = _a.sent();
                                                     SLPInfo = SLPDetails_1.data.filter(function (detail) { return detail["client_id"] == clientAddress; }).shift();
                                                     MMRInfo = MMRDetails_1.data.filter(function (detail) { return detail["client_id"] == clientAddress; }).shift();
                                                     dailyStats = {
@@ -178,38 +178,30 @@ var EventPoller = /** @class */ (function (_super) {
                                                     };
                                                     return [4 /*yield*/, shared_service_1.decryptKey(scholar.encryptedprivatekey || "")];
                                                 case 2:
-                                                    scholarPrivateKey = _b.sent();
+                                                    scholarPrivateKey = _a.sent();
                                                     if (!scholarPrivateKey) return [3 /*break*/, 5];
                                                     return [4 /*yield*/, ronin_service_1.getAccessToken(clientAddress, scholarPrivateKey)];
                                                 case 3:
-                                                    scholarAccessToken = _b.sent();
+                                                    scholarAccessToken = _a.sent();
                                                     if (!accessTokenResponse_1.data) {
                                                         console.log("Unable to fetch scholar's accesstoken.");
                                                         return [2 /*return*/];
                                                     }
                                                     ; // Can we avoid these kind of defense?
-                                                    return [4 /*yield*/, ronin_service_1.getMissionStatRoninAddress(scholar.roninaddress, scholarAccessToken.data)];
+                                                    return [4 /*yield*/, ronin_service_1.getMissionStatsByRoninAddress(scholar.roninaddress, scholarAccessToken.data)];
                                                 case 4:
-                                                    quests = _b.sent();
+                                                    quests = _a.sent();
                                                     if (quests.data) {
                                                         quest = quests.data;
-                                                        dailyQuest = quest.filter(function (q) { return q.quest_type === ronin_interfaces_1.QuestType.quest_type; }).shift();
+                                                        dailyQuest = quest.filter(function (q) { return q.quest_type === ronin_interfaces_1.QuestType.daily; }).shift();
                                                         missions = dailyQuest === null || dailyQuest === void 0 ? void 0 : dailyQuest.missions;
                                                         pvp = missions === null || missions === void 0 ? void 0 : missions.filter(function (m) { return m.mission_type === ronin_interfaces_1.MissionType.pvp; }).shift();
                                                         dailyStats.lasttotalwincount = pvp === null || pvp === void 0 ? void 0 : pvp.progress;
                                                     }
-                                                    _b.label = 5;
-                                                case 5: return [4 /*yield*/, shared_service_1.isProduction()];
+                                                    _a.label = 5;
+                                                case 5: return [4 /*yield*/, scholars_service_1.addDailyStats(dailyStats)];
                                                 case 6:
-                                                    if (!!(_b.sent())) return [3 /*break*/, 7];
-                                                    _a = { success: true };
-                                                    return [3 /*break*/, 9];
-                                                case 7: return [4 /*yield*/, scholars_service_1.addDailyStats(dailyStats)];
-                                                case 8:
-                                                    _a = _b.sent();
-                                                    _b.label = 9;
-                                                case 9:
-                                                    result = _a;
+                                                    result = _a.sent();
                                                     if (result.success) {
                                                         console.log("Successfully fetched daily status for " + scholar.name + " - " + scholar.roninaddress);
                                                     }
