@@ -48,7 +48,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                 const utcDate = new Date();
                 const localDateTime = new Date(utcDate.toString());
                 const currentHour = localDateTime.getHours();
-                if ((currentHour == hourToNotify || process.env.environment != "prod") && !sent) {
+                if ((currentHour == hourToNotify || (process.env.environment != "prod" && process.env.environment != "staging")) && !sent) {
                     const channel = this.discordClient.channels.cache.get(`${process.env.discordChannelId}`);
                     if (channel?.isText()) {
                         if (isProduction()) {
