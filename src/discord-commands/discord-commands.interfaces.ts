@@ -9,6 +9,7 @@ export interface Footer {
 }
 
 export interface DiscordEmbed {
+    title?: string,
     color?: string;
     fields: FieldValue[];
     timestamp?: Date;

@@ -5,6 +5,7 @@
 import { ChannelManager, Client, Intents, Channel } from "discord.js";
 import { EventEmitter } from "events";
 import { selfPing } from "../app-health/app-health.service";
+import { createMessageWithEmbeded } from "../discord-commands/discord-commands.service";
 import { MissionType, Quests, QuestType } from "../ronin/ronin.interfaces";
 import { getAccessToken, getMissionStatRoninAddress, getMMRInfoByRoninAddresses, getSLPInfoByRoninAddresses, getTotalSLPByRonin } from "../ronin/ronin.service";
 import { Accumulated_SLP, DailyStats, DailyStatusReport, Scholar } from "../scholars/scholars.interface";
@@ -144,10 +145,46 @@ export class EventPoller extends EventEmitter implements IWorker {
             try {
                 console.log('here is your daily report');
                 const dailyStatusReports = await getDailyStats();
-                await Promise.all(dailyStatusReports.map(async (dailyStatusReport: DailyStats) => {
+                const utcDate = new Date();
+                await Promise.all(dailyStatusReports.map(async (dailyStatusReport: DailyStats, index, reportList) => {
                     //  Send message
                     console.log(`${dailyStatusReport.name}, ${dailyStatusReport.totalslp}`);
-                    await this.sendMessageToAchievements(`Hey ${this.toDiscordMentionByUserId(dailyStatusReport.discordid)}. You farmed ${dailyStatusReport.totalslp} SLPs today.`)
+                    const embededMessage = createMessageWithEmbeded({
+                        title: `${dailyStatusReport.name}`,
+                        fields: [
+                            {
+                                name: `:moneybag: Total SLP`,
+                                value: `${dailyStatusReport.totalslp}`,
+                                inline: true,
+                            },
+                            {
+                                name: `:white_check_mark: Total Wins`,
+                                value: `${dailyStatusReport.lasttotalwincount}`,
+                                inline: true,
+                            },
+                            {
+                                name: ':rocket: MMR',
+                                value: `${dailyStatusReport.elo}`,
+                                inline: true,
+                            },
+                            {
+                                name: ':crown: Rank',
+                                value: `${dailyStatusReport.currentrank}`,
+                                inline: true,
+                            },
+                            {
+                                name: ':date: Timestamp',
+                                value: `${utcDate.toString()}`,
+                                inline: true,
+                            },
+                            {
+                                name: ':receipt: Ronin Address',
+                                value: `${dailyStatusReport.roninaddress}`,
+                                inline: true,
+                            }],
+                        footer: { text: index == (reportList.length - 1) ? `You're the noob of the day! Git good!` : `Thanks for playing. Keep it up!` }
+                    });
+                    await this.sendMessageToAchievements({ embeds: [embededMessage] });
                 })).then((result: any) => {
                     console.log(`Completed today's Report.`);
                     this.poll(`${process.env.pollingInterval}`);
@@ -169,10 +206,10 @@ export class EventPoller extends EventEmitter implements IWorker {
         setTimeout(() => this.emit(EventTypes.TICK), parseInt(`${interval}`));
     }
 
-    async sendMessageToAchievements(message: string) {
+    async sendMessageToAchievements(messageOrEmbed: any) {
         const channel = this.discordClient.channels.cache.get(`${process.env.discordChannelId}`);
         if (channel?.isText()) {
-            channel.send(message);
+            await channel.send(messageOrEmbed);
         }
     }
 

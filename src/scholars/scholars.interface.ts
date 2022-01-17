@@ -43,5 +43,5 @@ export interface DailyStats {
   elo: number,
   currentrank: number,
   lasttotalwincount?: number,
-  createdOn?: string
+  createdon?: string
 }
