@@ -4,7 +4,8 @@
  */
 const { Client } = require('pg');
 
-import { Accumulated_SLP, Scholar } from "./scholars.interface";
+import { MethodResponse } from "../shared/shared.interfaces";
+import { Accumulated_SLP, DailyStats, Scholar } from "./scholars.interface";
 
 
 const dummyScholars: Scholar[] = [
@@ -131,6 +132,56 @@ export const addAccumulatedSLP = async (accumulated_SLP: Accumulated_SLP) => {
   }
 }
 
+export const executeQuery = async (query: string, params?: any[]) => {
+  const methodResponse: MethodResponse = {
+    data: "",
+    success: false
+  }
+  const psqlClient = getPostgresClient();
+  try {
+    await psqlClient.connect();
+    const queryResult = await psqlClient.query(query, params);
+    methodResponse.data = queryResult;
+    methodResponse.success = true;
+  } catch (err) {
+    console.log(`executeQuery ${err}`);
+    methodResponse.success = false;
+  } finally {
+    await psqlClient.end();
+    return methodResponse;
+  }
+}
+
+export const fetchDailyStats = async () => {
+  const psqlClient = getPostgresClient();
+  try {
+    await psqlClient.connect();
+    const result = await psqlClient.query(
+      `
+      SELECT 
+      (SELECT dailyStats.totalslp - lag(dailyStats.totalslp, 1, 0) OVER (order by dailyStats.created_on) as result
+      FROM daily_stats as dailyStats 
+      WHERE dailyStats.roninAddress = scholars.roninAddress 
+      ORDER BY dailyStats."created_on" DESC LIMIT 1) AS totalslp, 
+      (select dailyStats.elo FROM daily_stats as dailyStats WHERE dailyStats.roninAddress = scholars.roninAddress group by dailyStats."created_on", dailyStats.elo ORDER BY dailyStats."created_on" limit 1) as elo,
+      (select dailyStats.currentrank FROM daily_stats as dailyStats WHERE dailyStats.roninAddress = scholars.roninAddress group by dailyStats."created_on", dailyStats.currentrank ORDER BY dailyStats."created_on" limit 1) as currentrank,
+      (select dailyStats.lasttotalwincount FROM daily_stats as dailyStats WHERE dailyStats.roninAddress = scholars.roninAddress group by dailyStats."created_on", dailyStats.lasttotalwincount ORDER BY dailyStats."created_on" limit 1) as lasttotalwincount,
+      scholars.id as scholarid,
+      scholars.name,
+      scholars.discordid, 
+      scholars.roninaddress
+      FROM scholars as scholars
+      ORDER BY totalslp DESC
+      `
+    );
+    return result;
+  } catch (err) {
+    console.log(err);
+    return false;
+  } finally {
+    await psqlClient.end();
+  }
+}
 /**
  * Service Methods
  */

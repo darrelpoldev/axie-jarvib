@@ -5,11 +5,14 @@
 import { ChannelManager, Client, Intents, Channel } from "discord.js";
 import { EventEmitter } from "events";
 import { selfPing } from "../app-health/app-health.service";
-import { getTotalSLPByRonin } from "../ronin/ronin.service";
-import { Accumulated_SLP, DailyStatusReport, Scholar } from "../scholars/scholars.interface";
+import { createMessageWithEmbeded } from "../discord-commands/discord-commands.service";
+import { MissionType, Quests, QuestType } from "../ronin/ronin.interfaces";
+import { getAccessToken, getMissionStatsByRoninAddress, getMMRInfoByRoninAddresses, getSLPInfoByRoninAddresses, getTotalSLPByRonin } from "../ronin/ronin.service";
+import { Accumulated_SLP, DailyStats, DailyStatusReport, Scholar } from "../scholars/scholars.interface";
 import { addAccumulatedSLP, dailyStatusReport } from "../scholars/scholars.repository";
-import { getDailySLPByRoninAddress, getDailyStatusReport, getScholars, toRoninAddress } from "../scholars/scholars.service";
-import { isProduction } from "../shared/shared.service";
+import { addDailyStats, getDailySLPByRoninAddress, getDailyStats, getDailyStatusReport, getScholars, toRoninAddress } from "../scholars/scholars.service";
+import { MethodResponse } from "../shared/shared.interfaces";
+import { decryptKey, isProduction, toClientId } from "../shared/shared.service";
 import { DailyResult, EventTypes, IWorker } from "./poller.interface";
 
 
@@ -72,28 +75,61 @@ export class EventPoller extends EventEmitter implements IWorker {
 
         this.on(EventTypes.DailyReset, async () => {
             try {
+                const defaultRoninAccountAddress = `${await toClientId(`${process.env.roninAccountAddress}`)}`;
+                const defaultRoninAccountPrivateKey = `${process.env.roninAccountPrivateKey}`;
+                const accessTokenResponse = await getAccessToken(defaultRoninAccountAddress, defaultRoninAccountPrivateKey);
+                if (!accessTokenResponse.data) return; // Can we avoid these kind of defense?
+                // const scholars = await (await getScholars()).filter(x => x.id == 2);
                 const scholars = await getScholars();
-                if (scholars.length == 0) return;
+                if (scholars.length == 0) return; // Can we avoid these kind of defense?
+                const SLPDetails = await getSLPInfoByRoninAddresses(scholars.map(scholar => scholar.roninaddress));
+                //  TODO: Save MMR details to database;
+                const MMRDetails = await getMMRInfoByRoninAddresses(scholars.map(scholar => scholar.roninaddress));
                 await Promise.all(scholars.map(async (scholar: Scholar) => {
-                    const roninAddress = scholar.roninaddress;
-                    const scholarDetails = await getTotalSLPByRonin(roninAddress);
-                    if (!scholarDetails) return; // This has to be moved or handled somewhere.
-                    const scholarDetail = scholarDetails.shift();
-                    const accumulated_SLP: Accumulated_SLP = {
-                        roninAddress: await toRoninAddress(scholarDetail["client_id"]),
-                        scholarId: scholar.id,
-                        total: scholarDetail["total"]
+                    const clientAddress = await toClientId(scholar.roninaddress);
+                    const SLPInfo = SLPDetails.data.filter((detail: any) => detail["client_id"] == clientAddress).shift();
+                    const MMRInfo = MMRDetails.data.filter((detail: any) => detail["client_id"] == clientAddress).shift();
+                    const dailyStats: DailyStats = {
+                        scholarid: scholar.id,
+                        roninaddress: scholar.roninaddress,
+                        name: scholar.name,
+                        discordid: scholar.discordid,
+                        totalslp: SLPInfo["total"],
+                        currentrank: MMRInfo["rank"],
+                        elo: MMRInfo["elo"],
+                        lasttotalwincount: 0
                     };
-                    const result = await addAccumulatedSLP(accumulated_SLP);
-                    if (result) {
-                        console.log(`Successfully fetched latest record for ${roninAddress}`);
+                    const scholarPrivateKey = await decryptKey(scholar.encryptedprivatekey || "");
+                    if (scholarPrivateKey) {
+                        const scholarAccessToken = await getAccessToken(clientAddress, scholarPrivateKey);
+                        if (!accessTokenResponse.data) {
+                            console.log(`Unable to fetch scholar's accesstoken.`);
+                            return;
+                        }; // Can we avoid these kind of defense?
+
+                        const quests: MethodResponse = await getMissionStatsByRoninAddress(scholar.roninaddress, scholarAccessToken.data);
+                        if (quests.data) {
+                            const quest: Quests[] = <Quests[]>quests.data;
+                            const dailyQuest = quest.filter(q => q.quest_type === QuestType.daily).shift();
+                            const missions = dailyQuest?.missions;
+                            const pvp = missions?.filter(m => m.mission_type === MissionType.pvp).shift();
+                            dailyStats.lasttotalwincount = pvp?.progress;
+                        }
                     }
-                })).then(result => {
-                    console.log(`Completed collecting accumulated SLPs...`);
+                    const result = await addDailyStats(dailyStats);
+                    if (result.success) {
+                        console.log(`Successfully fetched daily status for ${scholar.name} - ${scholar.roninaddress}`);
+                    }
+                    else {
+                        this.sendMessageToAchievements(`There are some problem fetching daily status for ${scholar.name} - ${scholar.roninaddress}. Please help.`);
+                        console.log(`Unable to save daily status for ${scholar.name} - ${scholar.roninaddress}`);
+                    }
+                })).then(() => {
+                    console.log(`Completed consolidating daily statistics...`);
                     this.emit(EventTypes.ReadyForReport);
-                }).catch((error: any) => {
-                    this.sendMessageToAchievements(`I'm failing master. Please check the logs.`);
-                    console.log(`Unable to collect accumulated SLPs. ${error}`);
+                }).catch(err => {
+                    this.sendMessageToAchievements(`Master, I'm unable to consolidate daily status. Please help.`);
+                    console.log(`Unable to collect daily stats. ${err}`);
                 });
             } catch (error) {
                 console.log(`Unable to compose daily report...`, error);
@@ -103,11 +139,48 @@ export class EventPoller extends EventEmitter implements IWorker {
 
         this.on(EventTypes.ReadyForReport, async () => {
             try {
-                const dailyStatusReports = await getDailyStatusReport();
-                await Promise.all(dailyStatusReports.map(async (dailyStatusReport: DailyStatusReport) => {
+                console.log('here is your daily report');
+                const dailyStatusReports = await getDailyStats();
+                const utcDate = new Date();
+                await Promise.all(dailyStatusReports.map(async (dailyStatusReport: DailyStats, index, reportList) => {
                     //  Send message
-                    console.log(`${dailyStatusReport.name}, ${dailyStatusReport.farmedslpfromyesterday}`);
-                    await this.sendMessageToAchievements(`Hey ${this.toDiscordMentionByUserId(dailyStatusReport.discordid)}. You farmed ${dailyStatusReport.farmedslpfromyesterday} SLPs today.`)
+                    console.log(`${dailyStatusReport.name}, ${dailyStatusReport.totalslp}`);
+                    const embededMessage = createMessageWithEmbeded({
+                        title: `${dailyStatusReport.name}`,
+                        fields: [
+                            {
+                                name: `:moneybag: Total SLP`,
+                                value: `${dailyStatusReport.totalslp}`,
+                                inline: true,
+                            },
+                            {
+                                name: `:white_check_mark: Total Wins`,
+                                value: `${dailyStatusReport.lasttotalwincount}`,
+                                inline: true,
+                            },
+                            {
+                                name: ':rocket: MMR',
+                                value: `${dailyStatusReport.elo}`,
+                                inline: true,
+                            },
+                            {
+                                name: ':crown: Rank',
+                                value: `${dailyStatusReport.currentrank}`,
+                                inline: true,
+                            },
+                            {
+                                name: ':date: Timestamp',
+                                value: `${utcDate.toString()}`,
+                                inline: true,
+                            },
+                            {
+                                name: ':receipt: Ronin Address',
+                                value: `${dailyStatusReport.roninaddress}`,
+                                inline: true,
+                            }],
+                        footer: { text: index == (reportList.length - 1) ? `You're the noob of the day! Git good!` : `Thanks for playing. Keep it up!` }
+                    });
+                    await this.sendMessageToAchievements({ embeds: [embededMessage] });
                 })).then((result: any) => {
                     console.log(`Completed today's Report.`);
                     this.poll(`${process.env.pollingInterval}`);
@@ -129,11 +202,10 @@ export class EventPoller extends EventEmitter implements IWorker {
         setTimeout(() => this.emit(EventTypes.TICK), parseInt(`${interval}`));
     }
 
-    async sendMessageToAchievements(message: string) {
-        if (!isProduction()) return;
+    async sendMessageToAchievements(messageOrEmbed: any) {
         const channel = this.discordClient.channels.cache.get(`${process.env.discordChannelId}`);
         if (channel?.isText()) {
-            channel.send(message);
+            await channel.send(messageOrEmbed);
         }
     }
 

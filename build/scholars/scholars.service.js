@@ -40,7 +40,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toRoninAddress = exports.getDailySLPByRoninAddress = exports.getScholars = void 0;
+exports.addDailyStats = exports.toRoninAddress = exports.getDailyStats = exports.getDailyStatusReport = exports.getDailySLPByRoninAddress = exports.getScholars = void 0;
 var scholars_repository_1 = require("./scholars.repository");
 /**
  * Call Repository
@@ -72,6 +72,44 @@ var getDailySLPByRoninAddress = function (roninAddress) { return __awaiter(void 
     });
 }); };
 exports.getDailySLPByRoninAddress = getDailySLPByRoninAddress;
+var getDailyStatusReport = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var result, rowData, error_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                return [4 /*yield*/, scholars_repository_1.dailyStatusReport()];
+            case 1:
+                result = _a.sent();
+                rowData = result.rows;
+                return [2 /*return*/, rowData];
+            case 2:
+                error_1 = _a.sent();
+                return [2 /*return*/, []];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+exports.getDailyStatusReport = getDailyStatusReport;
+var getDailyStats = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var result, rowData, error_2;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                return [4 /*yield*/, scholars_repository_1.fetchDailyStats()];
+            case 1:
+                result = _a.sent();
+                rowData = result.rows;
+                return [2 /*return*/, rowData];
+            case 2:
+                error_2 = _a.sent();
+                return [2 /*return*/, []];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+exports.getDailyStats = getDailyStats;
 //  Converts "0x" to "ronin:"
 var toRoninAddress = function (clientId) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
@@ -79,3 +117,42 @@ var toRoninAddress = function (clientId) { return __awaiter(void 0, void 0, void
     });
 }); };
 exports.toRoninAddress = toRoninAddress;
+var addDailyStats = function (dailyStats) { return __awaiter(void 0, void 0, void 0, function () {
+    var methodResponse, query, params, queryResult, error_3;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                methodResponse = {
+                    data: "",
+                    success: false
+                };
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 3, 4, 5]);
+                query = "INSERT INTO daily_stats (scholarid, roninaddress, totalslp, elo, currentrank, lasttotalwincount, created_on) VALUES ($1, $2, $3, $4, $5, $6, current_timestamp)";
+                params = [
+                    dailyStats.scholarid,
+                    dailyStats.roninaddress,
+                    dailyStats.totalslp,
+                    dailyStats.elo,
+                    dailyStats.currentrank,
+                    dailyStats.lasttotalwincount
+                ];
+                return [4 /*yield*/, scholars_repository_1.executeQuery(query, params)];
+            case 2:
+                queryResult = _a.sent();
+                if (queryResult.success) {
+                    methodResponse.data = queryResult;
+                    methodResponse.success = true;
+                }
+                return [3 /*break*/, 5];
+            case 3:
+                error_3 = _a.sent();
+                console.log("addDailyStats", error_3);
+                return [3 /*break*/, 5];
+            case 4: return [2 /*return*/, methodResponse];
+            case 5: return [2 /*return*/];
+        }
+    });
+}); };
+exports.addDailyStats = addDailyStats;
