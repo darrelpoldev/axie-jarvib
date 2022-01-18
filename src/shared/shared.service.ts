@@ -18,8 +18,12 @@ export const isProduction = () => {
     return process.env.environment == "prod";
 }
 
+export const isStaging = () => {
+    return process.env.environment == "staging";
+}
+
 export const getHost = () => {
-    return isProduction() ? `${process.env.protocol}://${process.env.host}` : `${process.env.protocol}://${process.env.host}:${process.env.PORT}`;
+  return isProduction() || isStaging() ? `${process.env.protocol}://${process.env.host}` : `${process.env.protocol}://${process.env.host}:${process.env.PORT}`;
 }
 
 export const axieRequiredHeaders = (authorization?: string) => {
