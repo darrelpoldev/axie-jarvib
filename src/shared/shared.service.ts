@@ -23,7 +23,7 @@ export const isStaging = () => {
 }
 
 export const getHost = () => {
-    return isProduction() || isStaging() ? `${process.env.protocol}://${process.env.host}` : `${process.env.protocol}://${process.env.host}:${process.env.PORT}`;
+  return isProduction() || isStaging() ? `${process.env.protocol}://${process.env.host}` : `${process.env.protocol}://${process.env.host}:${process.env.PORT}`;
 }
 
 export const axieRequiredHeaders = (authorization?: string) => {
