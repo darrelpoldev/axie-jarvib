@@ -29,6 +29,16 @@ axiosRetry(axios, {
 /**
  * Service Methods
  */
+export const getAxieAPI = async (roninAddress: string) => {
+    try {
+        if (roninAddress == "") return "";
+        const scholarDetails = await axios.get(`${process.env.axieAPIEndpoint}/${roninAddress}`);
+        return scholarDetails.data;
+    } catch (errorMessage) {
+        console.log(`getTotalSLPByRonin ${errorMessage}`);
+        return false;
+    }
+}
 export const getTotalSLPByRonin = async (roninAddress: string) => {
     try {
         if (roninAddress == "") return "";
