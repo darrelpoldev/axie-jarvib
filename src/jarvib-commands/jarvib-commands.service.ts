@@ -143,12 +143,28 @@ export const startListening = async () => {
                 },
                 {
                     name: ':moneybag: NEXTCLAIM',
-                    value: `${next_claim.toLocaleString("en-US", time_format)}`,
+                    value: `${next_claim.toLocaleString("en-US", {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: true
+                    })}`,
                     inline: true,
                 },
                 {
                     name: ':moneybag: LASTCLAIM',
-                    value: `${last_claim.toLocaleString("en-US", time_format)}`,
+                    value: `${last_claim.toLocaleString("en-US", {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: true
+                    })}`,
                     inline: true,
                 }],
                 footer: {text: `get good ${username}`}
