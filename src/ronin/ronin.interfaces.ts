@@ -3,6 +3,13 @@ export interface MMR {
   ELO: number
 }
 
+export interface SLP {
+  total_slp: number,
+  raw_total: number,
+  next_claim: number,
+  last_claim: number
+}
+
 export interface Quests {
   quest_type: string,
   missions: [Missions]
