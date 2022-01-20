@@ -1,6 +1,6 @@
 import { writeToJsonFile } from "../file-system/file-system.service";
 import { EventPoller } from "../poller/poller.service";
-import { MMR } from "../ronin/ronin.interfaces";
+import { MMR, SLP } from "../ronin/ronin.interfaces";
 import { getMMRbyRoninAddress, getAxieAPI } from "../ronin/ronin.service";
 import { JobScheduler } from "../scheduler/scheduler.service";
 import { getScholars } from "../scholars/scholars.service";
