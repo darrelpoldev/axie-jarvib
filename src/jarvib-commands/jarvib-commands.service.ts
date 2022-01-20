@@ -1,7 +1,7 @@
 import { writeToJsonFile } from "../file-system/file-system.service";
 import { EventPoller } from "../poller/poller.service";
-import { MMR } from "../ronin/ronin.interfaces";
-import { getMMRbyRoninAddress } from "../ronin/ronin.service";
+import { MMR, SLP } from "../ronin/ronin.interfaces";
+import { getMMRbyRoninAddress, getAxieAPI } from "../ronin/ronin.service";
 import { JobScheduler } from "../scheduler/scheduler.service";
 import { getScholars } from "../scholars/scholars.service";
 import { getHost } from "../shared/shared.service";
@@ -100,6 +100,71 @@ export const startListening = async () => {
                 {
                     name: '👑 rank',
                     value: `${mmrDetails.rank}`,
+                    inline: true,
+                }],
+                footer: {text: `get good ${username}`}
+            })
+            message.reply({embeds: [stats]});
+
+        }
+        else if (command.toUpperCase() === Commands.GETSLP) {
+            const roninAddress = options;
+            if (roninAddress === undefined || roninAddress === "") message.reply(`Please provide ronin address`);
+            const slpDetails: SLP = await getAxieAPI(roninAddress);
+            if (!slpDetails) message.reply(`Unable to fetch SLP details`);
+
+            let last_claim = new Date(0)
+            last_claim.setUTCSeconds(slpDetails.last_claim)
+
+            let next_claim = new Date(0)
+            next_claim.setUTCSeconds(slpDetails.next_claim)
+
+            let time_format = {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            }
+
+            const stats = createMessageWithEmbeded({
+                fields: [
+                {
+                    name: '🚀 CURRENT',
+                    value: `${slpDetails.total_slp}`,
+                    inline: true,
+                },
+                {
+                    name: '👑 LIFETIME',
+                    value: `${slpDetails.raw_total}`,
+                    inline: true,
+                },
+                {
+                    name: ':moneybag: NEXTCLAIM',
+                    value: `${next_claim.toLocaleString("en-US", {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: true
+                    })}`,
+                    inline: true,
+                },
+                {
+                    name: ':moneybag: LASTCLAIM',
+                    value: `${last_claim.toLocaleString("en-US", {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: true
+                    })}`,
                     inline: true,
                 }],
                 footer: {text: `get good ${username}`}
