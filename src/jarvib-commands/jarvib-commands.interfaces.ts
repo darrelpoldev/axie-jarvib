@@ -1,7 +1,8 @@
 export enum Commands {
   PING = "PING",
   GETSCHOLARS = "GETSCHOLARS",
-  GETMMR = "GETMMR"
+  GETMMR = "GETMMR",
+  GETSLP = "GETSLP"
 }
 
 export const help: string = `Hey, you can tell me what to do using these commands:
