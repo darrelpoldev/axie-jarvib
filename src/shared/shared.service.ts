@@ -23,7 +23,7 @@ export const isStaging = () => {
 }
 
 export const getHost = () => {
-  return isProduction() || isStaging() ? `${process.env.protocol}://${process.env.host}` : `${process.env.protocol}://${process.env.host}:${process.env.PORT}`;
+    return isProduction() || isStaging() ? `${process.env.protocol}://${process.env.host}` : `${process.env.protocol}://${process.env.host}:${process.env.PORT}`;
 }
 
 export const axieRequiredHeaders = (authorization?: string) => {
@@ -50,9 +50,19 @@ export const toClientId = async (clientId: string) => {
 };
 
 export const decryptKey = async (encryptedKey: string): Promise<string> => {
-    if (encryptedKey == "") return "";
     const superSecretKey = `${process.env.cryptojsKey}`;
-    var bytes = CryptoJS.AES.decrypt(encryptedKey, superSecretKey);
-    const decryptedMessage = bytes.toString(CryptoJS.enc.Utf8);
-    return decryptedMessage;
+    try {
+        if (encryptedKey == "") return "";
+        var bytes = CryptoJS.AES.decrypt(encryptedKey, superSecretKey);
+        const decryptedMessage = bytes.toString(CryptoJS.enc.Utf8);
+        return decryptedMessage;
+    } catch (error) {
+        console.log(`
+            Unable to decrypt private key. 
+            Encrypted Private key ${encryptedKey}
+            Used secret ${superSecretKey};
+        `);
+        return "";
+    }
+
 }
