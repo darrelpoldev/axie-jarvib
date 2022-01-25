@@ -21,6 +21,12 @@ export const getScholars = async (): Promise<Scholar[]> => {
   return scholars;
 };
 
+export const getScholar = async (discordid: string): Promise<Scholar | undefined> => {
+  const scholars = await listScholars()
+  const scholar = scholars.find(scholar => scholar.discordid === discordid)
+  return scholar
+}
+
 export const getDailySLPByRoninAddress = async (roninAddress: string) => {
   const result = await dailySLPByRoninAddress(roninAddress);
   return result;
@@ -47,7 +53,7 @@ export const getDailyStats = async (): Promise<DailyStats[]> => {
 }
 
 //  Converts "0x" to "ronin:"
-export const toRoninAddress = async (clientId: string) => {
+export const toRoninAddress = (clientId: string) => {
   return clientId.replace(/^.{2}/g, 'ronin:');
 };
 
