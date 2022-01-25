@@ -263,7 +263,11 @@ const getBattleLog = (battle: PvpLog): BattleLog => {
     }
 }
 
-export const getBattleLogs = (pvpLogs: PvpLog[]): BattleLog[] =>  {
+export const getBattleLogs = (pvpLogs: PvpLog[], returnArr = false): string | BattleLog[] =>  {
     const latest = pvpLogs.slice(0, 3)
-    return latest.map(getBattleLog)
+    const battleLogs = latest.map(getBattleLog)
+    if (returnArr) return battleLogs;
+
+    const btlLogsString = battleLogs.reduce((p,n) => p + `[${n.date}](${n.link})\n`, "");
+    return btlLogsString;
 }

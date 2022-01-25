@@ -175,10 +175,10 @@ export const startListening = async () => {
         else if (command.toUpperCase() === Commands.GETSTATS) {
 
             const discordid: string = message.author.id
-            const scholar = await getScholar(discordid);
-            const roninAddress = scholar ? scholar.roninaddress : "";
+            const scholar = await getScholar(discordid)
+            const roninAddress = scholar ? scholar.roninaddress : ""
 
-            if (!scholar) message.reply(`Who are you???? :middle_finger:`);
+            if (!scholar) {message.reply(`Who are you???? :middle_finger:`); return}
 
             let today = new Date()
 
@@ -239,12 +239,10 @@ export const startListening = async () => {
                 },
                 {
                     name: ':notepad_spiral: BTL LOGS',
-                    value: `[${battleLogs[0].date}](${battleLogs[0].link})
-                            [${battleLogs[1].date}](${battleLogs[1].link})
-                            [${battleLogs[0].date}](${battleLogs[2].link})`,
+                    value: `${battleLogs}.`,
                     inline: true,
                 }],
-                footer: {text: `get good ${username}`}
+                footer: {text: `stats for ${username}`}
             })
             message.reply({embeds: [stats]});
 
