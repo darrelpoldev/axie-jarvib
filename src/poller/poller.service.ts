@@ -67,7 +67,6 @@ export class EventPoller extends EventEmitter implements IWorker {
                     console.log('checking at...', localDateTime);
                     this.poll(`${process.env.pollingInterval}`);
                 }
-                selfPing();
             } catch (error) {
                 console.error(`Error on ${EventTypes.TICK}`, error);
             }
