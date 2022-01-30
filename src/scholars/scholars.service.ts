@@ -96,7 +96,7 @@ export const GetScholarByDiscordId = async (discordId: number) => {
         methodResponse.success = true;
       }
     } catch (error) {
-      console.log(`addDailyStats`, error);
+      console.log(`getScholarByDiscordId`, error);
     } finally {
       return methodResponse;
     }
