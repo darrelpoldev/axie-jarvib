@@ -53,8 +53,9 @@ export class EventPoller extends EventEmitter implements IWorker {
                     if (channel?.isText()) {
                         if (isProduction()) {
                             channel.send(`Hey <@&${axieScholarRoleId}>(s) here's your daily reset alert. Brought to you by your BOT police, JARVIB.`);
+                            //  This is to avoid running the daily status report when in local
+                            this.emit(EventTypes.DailyReset);
                         };
-                        this.emit(EventTypes.DailyReset);
                     }
                     sent = true;
                 }
@@ -67,7 +68,6 @@ export class EventPoller extends EventEmitter implements IWorker {
                     console.log('checking at...', localDateTime);
                     this.poll(`${process.env.pollingInterval}`);
                 }
-                selfPing();
             } catch (error) {
                 console.error(`Error on ${EventTypes.TICK}`, error);
             }
