@@ -77,3 +77,30 @@ export const addDailyStats = async (dailyStats: DailyStats) => {
     return methodResponse;
   }
 }
+
+export const GetScholarByDiscordId = async (discordId: number) => {
+  try {
+    const methodResponse: MethodResponse = {
+      data: "",
+      success: false
+    }
+    try {
+      const query = `SELECT * FROM scholars where discordid = $1`;
+      const params = [
+        discordId,
+      ];
+      const queryResult = await executeQuery(query, params);
+      if (queryResult.success) {
+        const rowData = <Scholar[]>queryResult.data.rows;
+        methodResponse.data = rowData.length > 0 ? rowData.shift() : null;
+        methodResponse.success = true;
+      }
+    } catch (error) {
+      console.log(`addDailyStats`, error);
+    } finally {
+      return methodResponse;
+    }
+  } catch (error) {
+
+  }
+}

@@ -1,3 +1,4 @@
+import QRCode from "easyqrcodejs-nodejs";
 import { Missions, MMR, Quests } from "./ronin.interfaces";
 import Web3 from "web3";
 import { mainnet, axieRequiredHeaders, toClientId } from "../shared/shared.service";
@@ -142,16 +143,16 @@ export const fetchData = async (
     return data;
 };
 
-export const getAccessToken = async (roninAddress: string, roninPrivateKey: string): Promise<MethodResponse> => {
+export const getAccessToken = async (clientId: string, roninPrivateKey: string): Promise<MethodResponse> => {
     const methodResponse: MethodResponse = {
         data: "",
         success: false
     }
     try {
-        const roninAccountAddress = roninAddress;
+        const roninClientId = clientId;
         const roninAccountPrivateKey = roninPrivateKey;
         const randomMessageResponse = await getRandomMessage();
-        const accessToken = await submitSignature(roninAccountAddress, roninAccountPrivateKey, randomMessageResponse.data);
+        const accessToken = await submitSignature(roninClientId, roninAccountPrivateKey, randomMessageResponse.data);
         const methodResponse: MethodResponse = {
             data: accessToken,
             success: true
@@ -199,6 +200,7 @@ export const submitSignature = async (
             "variables": { "input": { "mainnet": mainnet, "owner": accountAddress, "message": randMessage, "signature": signature } },
             "query": "mutation CreateAccessTokenWithSignature($input: SignatureInput!) {\n  createAccessTokenWithSignature(input: $input) {\n    newAccount\n    result\n    accessToken\n    __typename\n  }\n}\n"
         });
+        console.log(response);
         return response.data.createAccessTokenWithSignature.accessToken;
     } catch (err) {
         console.log(err);
@@ -223,3 +225,30 @@ export const getMissionStatsByRoninAddress = async (roninAddress: string, access
         return methodResponse;
     }
 }
+
+// convert Access token to QR Code
+export const generateQRCode = (accessToken: string, fileId: string, scholarName: string): string => {
+    const qrcode = new QRCode({
+        text: accessToken,
+        width: 256,
+        height: 256,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.L,
+        quietZone: 15,
+        quietZoneColor: "rgba(0,0,0,0)",
+        // logo: './logo.png', // your brand logo path that put in the center of qr
+        logoWidth: 40,
+        logoHeight: 40,
+        title: `${scholarName}'s Axie Infinity Login QR Code`,
+        titleColor: "#004284",
+        titleBackgroundColor: "#fff",
+        titleHeight: 20,
+        titleTop: 10,
+    });
+    const fname = `${fileId}-qrcode.png`;
+    qrcode.saveImage({
+        path: fname
+    });
+    return fname;
+};
