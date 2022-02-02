@@ -4,7 +4,7 @@ export enum Commands {
   GETMMR = "GETMMR",
   GETSLP = "GETSLP",
   GETSTATS = "GETSTATS",
-  GENERATEMYQR = "GENERATEMYQR"
+  GENERATEMYQR = "GENERATEMYQR"  
 }
 
 export const help: string = `Hey, you can tell me what to do using these commands:
