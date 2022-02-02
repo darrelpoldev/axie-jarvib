@@ -5,27 +5,34 @@
 
 import { MethodResponse } from "../shared/shared.interfaces";
 import { DailyStats, DailyStatusReport, Scholar } from "./scholars.interface";
-import { listScholars, dailySLPByRoninAddress, dailyStatusReport, executeQuery, fetchDailyStats } from "./scholars.repository";
+import {
+  listScholars,
+  dailySLPByRoninAddress,
+  dailyStatusReport,
+  executeQuery,
+  fetchDailyStats,
+} from "./scholars.repository";
 
 /**
  * Call Repository
  */
-
 
 /**
  * Service Methods
  */
 
 export const getScholars = async (): Promise<Scholar[]> => {
-  const scholars = await listScholars()
+  const scholars = await listScholars();
   return scholars;
 };
 
-export const getScholar = async (discordid: string): Promise<Scholar | undefined> => {
-  const scholars = await listScholars()
-  const scholar = scholars.find(scholar => scholar.discordid === discordid)
-  return scholar
-}
+export const getScholar = async (
+  discordid: string
+): Promise<Scholar | undefined> => {
+  const scholars = await listScholars();
+  const scholar = scholars.find((scholar) => scholar.discordid === discordid);
+  return scholar;
+};
 
 export const getDailySLPByRoninAddress = async (roninAddress: string) => {
   const result = await dailySLPByRoninAddress(roninAddress);
@@ -40,7 +47,7 @@ export const getDailyStatusReport = async (): Promise<DailyStatusReport[]> => {
   } catch (error) {
     return [];
   }
-}
+};
 
 export const getDailyStats = async (): Promise<DailyStats[]> => {
   try {
@@ -50,18 +57,18 @@ export const getDailyStats = async (): Promise<DailyStats[]> => {
   } catch (error) {
     return [];
   }
-}
+};
 
 //  Converts "0x" to "ronin:"
-export const toRoninAddress = (clientId: string) => {
-  return clientId.replace(/^.{2}/g, 'ronin:');
+export const toRoninAddress = async (clientId: string) => {
+  return clientId.replace(/^.{2}/g, "ronin:");
 };
 
 export const addDailyStats = async (dailyStats: DailyStats) => {
   const methodResponse: MethodResponse = {
     data: "",
-    success: false
-  }
+    success: false,
+  };
   try {
     const query = `INSERT INTO daily_stats (scholarid, roninaddress, totalslp, elo, currentrank, lasttotalwincount, created_on) VALUES ($1, $2, $3, $4, $5, $6, current_timestamp)`;
     const params = [
@@ -70,7 +77,7 @@ export const addDailyStats = async (dailyStats: DailyStats) => {
       dailyStats.totalslp,
       dailyStats.elo,
       dailyStats.currentrank,
-      dailyStats.lasttotalwincount
+      dailyStats.lasttotalwincount,
     ];
     const queryResult = await executeQuery(query, params);
     if (queryResult.success) {
@@ -82,4 +89,4 @@ export const addDailyStats = async (dailyStats: DailyStats) => {
   } finally {
     return methodResponse;
   }
-}
+};

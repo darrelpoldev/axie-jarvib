@@ -194,8 +194,8 @@ export const startListening = async () => {
             pveLogs = pveLogs.filter(log => new Date(log.game_started) === today)
             if (!slpDetails) message.reply(`Unable to fetch PvE logs`);
 
-            const reducer = (p: number, n: PvpLog) => {
-                let winRonin = toRoninAddress(n.winner)
+            const reducer = async (p: number, n: PvpLog) => {
+                let winRonin = await toRoninAddress(n.winner)
                 if (winRonin === roninAddress) return p + 1
                 return p
             }
