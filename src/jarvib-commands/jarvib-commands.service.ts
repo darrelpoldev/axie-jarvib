@@ -1,9 +1,9 @@
 import { writeToJsonFile } from "../file-system/file-system.service";
 import { EventPoller } from "../poller/poller.service";
-import { MMR, SLP } from "../ronin/ronin.interfaces";
-import { getMMRbyRoninAddress, getAxieAPI, getAccessToken, generateQRCode } from "../ronin/ronin.service";
+import { MMR, AxieStats, PvpLog } from "../ronin/ronin.interfaces";
+import { getMMRbyRoninAddress, getAxieAPI, getAccessToken, generateQRCode, getPVPLogs, getPVELogs, getBattleLogs } from "../ronin/ronin.service";
 import { JobScheduler } from "../scheduler/scheduler.service";
-import { GetScholarByDiscordId, getScholars } from "../scholars/scholars.service";
+import { GetScholarByDiscordId, getScholars, getScholar, toRoninAddress } from "../scholars/scholars.service";
 import { decryptKey, getHost, toClientId } from "../shared/shared.service";
 import { Commands, help } from "./jarvib-commands.interfaces";
 import { createMessageWithEmbeded } from "../discord-commands/discord-commands.service";
@@ -201,6 +201,146 @@ export const startListening = async () => {
             setTimeout(() => {
                 unlink(qrCode, d => { });
             }, 5 * 1000);
+        }
+        else if (command.toUpperCase() === Commands.GETSLP) {
+            const roninAddress = options;
+            if (roninAddress === undefined || roninAddress === "") message.reply(`Please provide ronin address`);
+            const slpDetails: AxieStats = await getAxieAPI(roninAddress);
+            if (!slpDetails) message.reply(`Unable to fetch AxieStats`);
+
+            let last_claim = new Date(0)
+            last_claim.setUTCSeconds(slpDetails.last_claim)
+
+            let next_claim = new Date(0)
+            next_claim.setUTCSeconds(slpDetails.next_claim)
+
+            let time_format = {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            }
+
+            const stats = createMessageWithEmbeded({
+                fields: [
+                {
+                    name: '🚀 CURRENT',
+                    value: `${slpDetails.total_slp}`,
+                    inline: true,
+                },
+                {
+                    name: '👑 LIFETIME',
+                    value: `${slpDetails.raw_total}`,
+                    inline: true,
+                },
+                {
+                    name: ':moneybag: NEXTCLAIM',
+                    value: `${next_claim.toLocaleString("en-US", {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: true
+                    })}`,
+                    inline: true,
+                },
+                {
+                    name: ':moneybag: LASTCLAIM',
+                    value: `${last_claim.toLocaleString("en-US", {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: true
+                    })}`,
+                    inline: true,
+                }],
+                footer: {text: `get good ${username}`}
+            })
+            message.reply({embeds: [stats]});
+
+        }
+        else if (command.toUpperCase() === Commands.GETSTATS) {
+
+            const discordid: string = message.author.id
+            const scholar = await getScholar(discordid)
+            const roninAddress = scholar ? scholar.roninaddress : ""
+
+            if (!scholar) {message.reply(`Who are you???? :middle_finger:`); return}
+
+            let today = new Date()
+
+            const slpDetails: AxieStats = await getAxieAPI(roninAddress);
+            if (!slpDetails) message.reply(`Unable to fetch AxieStats`);
+
+            let pvpLogs: PvpLog[] = await getPVPLogs(roninAddress);
+            pvpLogs = pvpLogs.filter(log => new Date(log.game_started) === today)
+
+            if (!slpDetails) message.reply(`Unable to fetch  PvP logs`);
+
+            let pveLogs: PvpLog[] = await getPVELogs(roninAddress);
+            pveLogs = pveLogs.filter(log => new Date(log.game_started) === today)
+            if (!slpDetails) message.reply(`Unable to fetch PvE logs`);
+
+            const reducer = async (p: number, n: PvpLog) => {
+                let winRonin = await toRoninAddress(n.winner)
+                if (winRonin === roninAddress) return p + 1
+                return p
+            }
+
+            const pvpWins = pvpLogs.reduce(reducer, 0)
+            const pveWins = pveLogs.reduce(reducer, 0)
+
+            const battleLogs = getBattleLogs(pvpLogs);
+
+            const stats = createMessageWithEmbeded({
+                fields: [
+                {
+                    name: ':rocket: C SLP',
+                    value: `${slpDetails.total_slp}`,
+                    inline: true,
+                },
+                {
+                    name: ':full_moon: L SLP',
+                    value: `${slpDetails.raw_total}`,
+                    inline: true,
+                },
+                {
+                    name: ':crown: RANK',
+                    value: `${slpDetails.rank}`,
+                    inline: true,
+                },
+                {
+                    name: ':crossed_swords: MMR',
+                    value: `${slpDetails.mmr}`,
+                    inline: true,
+                },
+                {
+                    name: ':person_fencing: AD WINS',
+                    value: `${pveWins}`,
+                    inline: true,
+                },
+                {
+                    name: ':ninja: PVP WINS',
+                    value: `${pvpWins}`,
+                    inline: true,
+                },
+                {
+                    name: ':notepad_spiral: BTL LOGS',
+                    value: `${battleLogs}.`,
+                    inline: true,
+                }],
+                footer: {text: `stats for ${username}`}
+            })
+            message.reply({embeds: [stats]});
+
         }
         else {
             message.reply(`The fvck are you saying?`);
