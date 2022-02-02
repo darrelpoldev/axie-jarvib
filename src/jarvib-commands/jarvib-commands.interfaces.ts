@@ -3,7 +3,8 @@ export enum Commands {
   GETSCHOLARS = "GETSCHOLARS",
   GETMMR = "GETMMR",
   GETSLP = "GETSLP",
-  GENERATEMYQR = "GENERATEMYQR"
+  GETSTATS = "GETSTATS",
+  GENERATEMYQR = "GENERATEMYQR"  
 }
 
 export const help: string = `Hey, you can tell me what to do using these commands:

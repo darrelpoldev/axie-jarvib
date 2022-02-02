@@ -1,5 +1,5 @@
 import QRCode from "easyqrcodejs-nodejs";
-import { Missions, MMR, Quests } from "./ronin.interfaces";
+import { Missions, MMR, Quests, PvpLog, BattleLog } from "./ronin.interfaces";
 import Web3 from "web3";
 import { mainnet, axieRequiredHeaders, toClientId } from "../shared/shared.service";
 import { MethodResponse } from "../shared/shared.interfaces";
@@ -36,10 +36,11 @@ export const getAxieAPI = async (roninAddress: string) => {
         const scholarDetails = await axios.get(`${process.env.axieAPIEndpoint}/${roninAddress}`);
         return scholarDetails.data;
     } catch (errorMessage) {
-        console.log(`getTotalSLPByRonin ${errorMessage}`);
+        console.log(`getAxieAPI ${errorMessage}`);
         return false;
     }
 }
+
 export const getTotalSLPByRonin = async (roninAddress: string) => {
     try {
         if (roninAddress == "") return "";
@@ -223,6 +224,53 @@ export const getMissionStatsByRoninAddress = async (roninAddress: string, access
     } finally {
         return methodResponse;
     }
+}
+
+export const getPVPLogs = async (roninAddress: string): Promise<PvpLog[]> => {
+    if (roninAddress == "") return [];
+    try {
+        const res = await axios.get(`${process.env.pvpEndpoint}/${roninAddress}`);
+        return res.data.battles;
+    } catch (errorMessage) {
+        console.log(`getPVPLogs ${errorMessage}`);
+        return [];
+    }
+}
+
+export const getPVELogs = async (roninAddress: string): Promise<PvpLog[]> => {
+    if (roninAddress == "") return [];
+    try {
+        const res = await axios.get(`${process.env.pveEndpoint}/${roninAddress}`);
+        return res.data.battles;
+    } catch (errorMessage) {
+        console.log(`getPVPLogs ${errorMessage}`);
+        return [];
+    }
+}
+
+const getBattleLog = (battle: PvpLog): BattleLog => { 
+    let date = new Date(battle.game_started).toLocaleString("en-US", {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    })
+    return { 
+        link: `${process.env.axieReplayEndpoint}${battle.battle_uuid}`,
+        date
+    }
+}
+
+export const getBattleLogs = (pvpLogs: PvpLog[], returnArr = false): string | BattleLog[] =>  {
+    const latest = pvpLogs.slice(0, 3)
+    const battleLogs = latest.map(getBattleLog)
+    if (returnArr) return battleLogs;
+
+    const btlLogsString = battleLogs.reduce((p,n) => p + `[${n.date}](${n.link})\n`, "");
+    return btlLogsString;
 }
 
 // convert Access token to QR Code
