@@ -53,8 +53,9 @@ export class EventPoller extends EventEmitter implements IWorker {
                     if (channel?.isText()) {
                         if (isProduction()) {
                             channel.send(`Hey <@&${axieScholarRoleId}>(s) here's your daily reset alert. Brought to you by your BOT police, JARVIB.`);
+                            //  This is to avoid running the daily status report when in local
+                            this.emit(EventTypes.DailyReset);
                         };
-                        this.emit(EventTypes.DailyReset);
                     }
                     sent = true;
                 }
@@ -67,7 +68,6 @@ export class EventPoller extends EventEmitter implements IWorker {
                     console.log('checking at...', localDateTime);
                     this.poll(`${process.env.pollingInterval}`);
                 }
-                selfPing();
             } catch (error) {
                 console.error(`Error on ${EventTypes.TICK}`, error);
             }
@@ -128,12 +128,12 @@ export class EventPoller extends EventEmitter implements IWorker {
                     console.log(`Completed consolidating daily statistics...`);
                     this.emit(EventTypes.ReadyForReport);
                 }).catch(err => {
-                    this.sendMessageToAchievements(`Master, I'm unable to consolidate daily status. Please help.`);
+                    this.sendMessageToAchievements(`Master, I'm unable to consolidate daily status. Please help. ${err}`);
                     console.log(`Unable to collect daily stats. ${err}`);
                 });
             } catch (error) {
                 console.log(`Unable to compose daily report...`, error);
-                this.sendMessageToAchievements(`I'm failing master. Please check the logs.`);
+                this.sendMessageToAchievements(`I'm failing master. Please check the logs. ${error}`);
             }
         });
 
@@ -186,7 +186,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                     this.poll(`${process.env.pollingInterval}`);
                 }).catch((error) => {
                     console.log(`Unable to compose daily report...`, error);
-                    this.sendMessageToAchievements(`I'm failing master. Please check the logs.`);
+                    this.sendMessageToAchievements(`I'm failing master. Please check the logs. ${error}`);
                 });
             } catch (error) {
                 console.log(`EventTypes.ReadyForReport ${error}`);

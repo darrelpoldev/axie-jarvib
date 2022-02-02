@@ -35,7 +35,7 @@ export const getPostgresClient = () => {
     user: `${process.env.postgresUser}`,
     password: `${process.env.postgresPassword}`,
     database: `${process.env.postgresDatabase}`,
-    ssl: { rejectUnauthorized: false }
+    ssl: process.env.postgresSSL === "true" ? true : false
   });
 }
 

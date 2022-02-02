@@ -1,12 +1,14 @@
 import { writeToJsonFile } from "../file-system/file-system.service";
 import { EventPoller } from "../poller/poller.service";
 import { MMR, AxieStats, PvpLog } from "../ronin/ronin.interfaces";
-import { getMMRbyRoninAddress, getAxieAPI, getPVPLogs, getPVELogs, getBattleLogs } from "../ronin/ronin.service";
+import { getMMRbyRoninAddress, getAxieAPI, getAccessToken, generateQRCode, getPVPLogs, getPVELogs, getBattleLogs } from "../ronin/ronin.service";
 import { JobScheduler } from "../scheduler/scheduler.service";
-import { getScholars, getScholar, toRoninAddress } from "../scholars/scholars.service";
-import { getHost } from "../shared/shared.service";
+import { GetScholarByDiscordId, getScholars, getScholar, toRoninAddress } from "../scholars/scholars.service";
+import { decryptKey, getHost, toClientId } from "../shared/shared.service";
 import { Commands, help } from "./jarvib-commands.interfaces";
 import { createMessageWithEmbeded } from "../discord-commands/discord-commands.service";
+import { Scholar } from "../scholars/scholars.interface";
+import { unlink } from "fs";
 const schedule = require('node-schedule');
 
 /**
@@ -89,23 +91,116 @@ export const startListening = async () => {
             if (roninAddress === undefined || roninAddress === "") message.reply(`Please provide ronin address`);
             const mmrDetails: MMR = await getMMRbyRoninAddress(roninAddress);
             if (!mmrDetails) message.reply(`Unable to fetch MMR details`);
-            
+
             const stats = createMessageWithEmbeded({
                 fields: [
-                {
-                    name: '🚀 MMR',
-                    value: `${mmrDetails.ELO}`,
-                    inline: true,
-                },
-                {
-                    name: '👑 rank',
-                    value: `${mmrDetails.rank}`,
-                    inline: true,
-                }],
-                footer: {text: `get good ${username}`}
+                    {
+                        name: '🚀 MMR',
+                        value: `${mmrDetails.ELO}`,
+                        inline: true,
+                    },
+                    {
+                        name: '👑 rank',
+                        value: `${mmrDetails.rank}`,
+                        inline: true,
+                    }],
+                footer: { text: `get good ${username}` }
             })
-            message.reply({embeds: [stats]});
+            message.reply({ embeds: [stats] });
 
+        }
+        else if (command.toUpperCase() === Commands.GETSLP) {
+            const roninAddress = options;
+            if (roninAddress === undefined || roninAddress === "") message.reply(`Please provide ronin address`);
+            const slpDetails: SLP = await getAxieAPI(roninAddress);
+            if (!slpDetails) message.reply(`Unable to fetch SLP details`);
+
+            let last_claim = new Date(0)
+            last_claim.setUTCSeconds(slpDetails.last_claim)
+
+            let next_claim = new Date(0)
+            next_claim.setUTCSeconds(slpDetails.next_claim)
+
+            let time_format = {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            }
+
+            const stats = createMessageWithEmbeded({
+                fields: [
+                    {
+                        name: '🚀 CURRENT',
+                        value: `${slpDetails.total_slp}`,
+                        inline: true,
+                    },
+                    {
+                        name: '👑 LIFETIME',
+                        value: `${slpDetails.raw_total}`,
+                        inline: true,
+                    },
+                    {
+                        name: ':moneybag: NEXTCLAIM',
+                        value: `${next_claim.toLocaleString("en-US", {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            hour12: true
+                        })}`,
+                        inline: true,
+                    },
+                    {
+                        name: ':moneybag: LASTCLAIM',
+                        value: `${last_claim.toLocaleString("en-US", {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            hour12: true
+                        })}`,
+                        inline: true,
+                    }],
+                footer: { text: `get good ${username}` }
+            })
+            message.reply({ embeds: [stats] });
+        }
+        else if (command.toUpperCase() === Commands.GENERATEMYQR) {
+            const discordId = message.author.id;
+            const response = await GetScholarByDiscordId(discordId);
+            if (response?.data == null) {
+                await message.reply(`I can't seem to find you on the list of scholars. Please make sure you've signed your Contract with my master.`);
+                return;
+            }
+            const scholar: Scholar = <Scholar>response?.data;
+            const clientId = `${await toClientId(scholar.roninaddress)}`;
+            const scholarPrivateKey = await decryptKey(scholar.encryptedprivatekey || "");
+            const accessTokenResponse = await getAccessToken(clientId, scholarPrivateKey);
+            if (!accessTokenResponse.data) {
+                await message.reply(`It appears that I'm unable to generate accesstoken for you. Please try again after a couple of minutes.`);
+                return;
+            }
+            const fileId = `jadewick_qr_${scholar.discordid}_${Math.floor(Math.random() * 1000000)}`;
+            const qrCode = await generateQRCode(accessTokenResponse.data, fileId, scholar.name);
+
+            await message.author.send(`Here's your new QR code ${scholar.name}: `);
+            message.author.send({
+                files: [qrCode]
+            });
+            await message.reply(`QR Code has been sent to you privately.`);
+
+            //  Unlink file
+            setTimeout(() => {
+                unlink(qrCode, d => { });
+            }, 5 * 1000);
         }
         else if (command.toUpperCase() === Commands.GETSLP) {
             const roninAddress = options;
