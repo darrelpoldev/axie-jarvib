@@ -111,6 +111,7 @@ export const startListening = async () => {
         }
         else if (command.toUpperCase() === Commands.GENERATEMYQR) {
             const discordId = message.author.id;
+            console.log(Commands.GENERATEMYQR);
             const response = await GetScholarByDiscordId(discordId);
             if (response?.data == null) {
                 await message.reply(`I can't seem to find you on the list of scholars. Please make sure you've signed your Contract with my master.`);
@@ -131,8 +132,8 @@ export const startListening = async () => {
             message.author.send({
                 files: [qrCode]
             });
-            await message.reply(`QR Code has been sent to you privately.`);          
-          
+            await message.reply(`QR Code has been sent to you privately.`);
+
             //  Unlink file
             setTimeout(() => {
                 unlink(qrCode, d => { });
