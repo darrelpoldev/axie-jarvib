@@ -131,8 +131,8 @@ export const startListening = async () => {
             message.author.send({
                 files: [qrCode]
             });
-            await message.reply(`QR Code has been sent to you privately.`);          
-          
+            await message.reply(`QR Code has been sent to you privately.`);
+
             //  Unlink file
             setTimeout(() => {
                 unlink(qrCode, d => { });
