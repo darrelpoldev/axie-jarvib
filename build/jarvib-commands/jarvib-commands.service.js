@@ -154,6 +154,7 @@ var startListening = function () { return __awaiter(void 0, void 0, void 0, func
                     case 4:
                         if (!(command.toUpperCase() === jarvib_commands_interfaces_1.Commands.GENERATEMYQR)) return [3 /*break*/, 16];
                         discordId = message.author.id;
+                        console.log(jarvib_commands_interfaces_1.Commands.GENERATEMYQR);
                         return [4 /*yield*/, scholars_service_1.GetScholarByDiscordId(discordId)];
                     case 5:
                         response = _b.sent();
