@@ -25,6 +25,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Required External Modules
  */
+require('newrelic');
 var dotenv = __importStar(require("dotenv"));
 var express_1 = __importDefault(require("express"));
 var cors_1 = __importDefault(require("cors"));
