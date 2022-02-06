@@ -1,6 +1,7 @@
 /**
  * Required External Modules
  */
+require('newrelic');
 import * as dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
