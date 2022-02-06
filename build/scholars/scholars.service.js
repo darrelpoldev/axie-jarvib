@@ -40,7 +40,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GetScholarByDiscordId = exports.addDailyStats = exports.toRoninAddress = exports.getDailyStats = exports.getDailyStatusReport = exports.getDailySLPByRoninAddress = exports.getScholar = exports.getScholars = void 0;
+exports.getDailyStatsByScholarId = exports.GetScholarByDiscordId = exports.addDailyStats = exports.toRoninAddress = exports.getDailyStats = exports.getDailyStatusReport = exports.getDailySLPByRoninAddress = exports.getScholar = exports.getScholars = void 0;
 var scholars_repository_1 = require("./scholars.repository");
 /**
  * Call Repository
@@ -209,3 +209,41 @@ var GetScholarByDiscordId = function (discordId) { return __awaiter(void 0, void
     });
 }); };
 exports.GetScholarByDiscordId = GetScholarByDiscordId;
+var getDailyStatsByScholarId = function (scholarId) { return __awaiter(void 0, void 0, void 0, function () {
+    var methodResponse, query, queryResult, rowData, error_6;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                methodResponse = {
+                    data: "",
+                    success: false,
+                };
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 3, 4, 5]);
+                query = "select * from daily_stats where scholarid = " + scholarId + " and created_on > now() - interval '1 day' LIMIT 1;";
+                return [4 /*yield*/, scholars_repository_1.executeQuery(query)];
+            case 2:
+                queryResult = _a.sent();
+                if (queryResult.success) {
+                    rowData = queryResult.data.rows;
+                    if (rowData.length) {
+                        methodResponse.data = rowData.shift();
+                        methodResponse.success = true;
+                    }
+                    else {
+                        methodResponse.data = null;
+                        methodResponse.success = false;
+                    }
+                }
+                return [3 /*break*/, 5];
+            case 3:
+                error_6 = _a.sent();
+                console.log("addDailyStats", error_6);
+                return [3 /*break*/, 5];
+            case 4: return [2 /*return*/, methodResponse];
+            case 5: return [2 /*return*/];
+        }
+    });
+}); };
+exports.getDailyStatsByScholarId = getDailyStatsByScholarId;

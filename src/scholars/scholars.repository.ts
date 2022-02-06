@@ -182,6 +182,7 @@ export const fetchDailyStats = async () => {
     await psqlClient.end();
   }
 }
+
 /**
  * Service Methods
  */

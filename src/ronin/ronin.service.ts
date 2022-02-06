@@ -5,23 +5,23 @@ import { mainnet, axieRequiredHeaders, toClientId } from "../shared/shared.servi
 import { MethodResponse } from "../shared/shared.interfaces";
 const web3 = new Web3();
 const axiosRetry = require('axios-retry');
+const axios = require('axios');
 
 /**
  * Data Model Interfaces
  * Libraries
  */
-const axios = require('axios');
-axiosRetry(axios, {
-    retries: 3, // number of retries
-    retryDelay: (retryCount: any) => {
-        console.log(`retry attempt: ${retryCount}`);
-        return retryCount * 2000; // time interval between retries
-    },
-    retryCondition: (error: any) => {
-        // if retry condition is not specified, by default idempotent requests are retried
-        return error.response.status === 503;
-    }
-});
+// axiosRetry(axios, {
+//     retries: 3, // number of retries
+//     retryDelay: (retryCount: any) => {
+//         console.log(`retry attempt: ${retryCount}`);
+//         return retryCount * 2000; // time interval between retries
+//     },
+//     retryCondition: (error: any) => {
+//         // if retry condition is not specified, by default idempotent requests are retried
+//         return error.response.status === 503;
+//     }
+// });
 /**
  * Call Repository
  */
@@ -153,12 +153,14 @@ export const getAccessToken = async (clientId: string, roninPrivateKey: string):
         const roninClientId = clientId;
         const roninAccountPrivateKey = roninPrivateKey;
         const randomMessageResponse = await getRandomMessage();
+        if (!randomMessageResponse.status) return methodResponse;
         const accessToken = await submitSignature(roninClientId, roninAccountPrivateKey, randomMessageResponse.data);
-        const methodResponse: MethodResponse = {
+        if (!accessToken) return methodResponse;
+        const result: MethodResponse = {
             data: accessToken,
             success: true
         }
-        return methodResponse;
+        return result;
     } catch (error) {
         methodResponse.errorDetails = {
             message: "Unable to get AccessToken",
@@ -181,7 +183,7 @@ export const getRandomMessage = async () => {
             data: response.data.createRandomMessage
         }
     } catch (err) {
-        console.log(err);
+        console.log(`getRandomMessage ${err}`);
         return {
             data: '',
             status: false
@@ -201,9 +203,13 @@ export const submitSignature = async (
             "variables": { "input": { "mainnet": mainnet, "owner": accountAddress, "message": randMessage, "signature": signature } },
             "query": "mutation CreateAccessTokenWithSignature($input: SignatureInput!) {\n  createAccessTokenWithSignature(input: $input) {\n    newAccount\n    result\n    accessToken\n    __typename\n  }\n}\n"
         });
+        if (response.errors) {
+            console.log(`Unable to create access token for accountAddress - ${accountAddress}: privatekey: ${privateKey}. ${JSON.stringify(response)}`);
+            return false;
+        }
         return response.data.createAccessTokenWithSignature.accessToken;
-    } catch (err) {
-        console.log(err);
+    } catch (err: any) {
+        console.log(`submitSignature`, err);
         return false;
     }
 };
@@ -248,7 +254,7 @@ export const getPVELogs = async (roninAddress: string): Promise<PvpLog[]> => {
     }
 }
 
-const getBattleLog = (battle: PvpLog): BattleLog => { 
+const getBattleLog = (battle: PvpLog): BattleLog => {
     let date = new Date(battle.game_started).toLocaleString("en-US", {
         day: '2-digit',
         month: '2-digit',
@@ -258,18 +264,18 @@ const getBattleLog = (battle: PvpLog): BattleLog => {
         second: '2-digit',
         hour12: true
     })
-    return { 
+    return {
         link: `${process.env.axieReplayEndpoint}${battle.battle_uuid}`,
         date
     }
 }
 
-export const getBattleLogs = (pvpLogs: PvpLog[], returnArr = false): string | BattleLog[] =>  {
+export const getBattleLogs = (pvpLogs: PvpLog[], returnArr = false): string | BattleLog[] => {
     const latest = pvpLogs.slice(0, 3)
     const battleLogs = latest.map(getBattleLog)
     if (returnArr) return battleLogs;
 
-    const btlLogsString = battleLogs.reduce((p,n) => p + `[${n.date}](${n.link})\n`, "");
+    const btlLogsString = battleLogs.reduce((p, n) => p + `[${n.date}](${n.link})\n`, "");
     return btlLogsString;
 }
 
