@@ -45,22 +45,22 @@ var web3_1 = __importDefault(require("web3"));
 var shared_service_1 = require("../shared/shared.service");
 var web3 = new web3_1.default();
 var axiosRetry = require('axios-retry');
+var axios = require('axios');
 /**
  * Data Model Interfaces
  * Libraries
  */
-var axios = require('axios');
-axiosRetry(axios, {
-    retries: 3,
-    retryDelay: function (retryCount) {
-        console.log("retry attempt: " + retryCount);
-        return retryCount * 2000; // time interval between retries
-    },
-    retryCondition: function (error) {
-        // if retry condition is not specified, by default idempotent requests are retried
-        return error.response.status === 503;
-    }
-});
+// axiosRetry(axios, {
+//     retries: 3, // number of retries
+//     retryDelay: (retryCount: any) => {
+//         console.log(`retry attempt: ${retryCount}`);
+//         return retryCount * 2000; // time interval between retries
+//     },
+//     retryCondition: (error: any) => {
+//         // if retry condition is not specified, by default idempotent requests are retried
+//         return error.response.status === 503;
+//     }
+// });
 /**
  * Call Repository
  */
@@ -248,7 +248,7 @@ var fetchData = function (postData) { return __awaiter(void 0, void 0, void 0, f
 }); };
 exports.fetchData = fetchData;
 var getAccessToken = function (clientId, roninPrivateKey) { return __awaiter(void 0, void 0, void 0, function () {
-    var methodResponse, roninClientId, roninAccountPrivateKey, randomMessageResponse, accessToken, methodResponse_2, error_3;
+    var methodResponse, roninClientId, roninAccountPrivateKey, randomMessageResponse, accessToken, result, error_3;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -264,14 +264,18 @@ var getAccessToken = function (clientId, roninPrivateKey) { return __awaiter(voi
                 return [4 /*yield*/, exports.getRandomMessage()];
             case 2:
                 randomMessageResponse = _a.sent();
+                if (!randomMessageResponse.status)
+                    return [2 /*return*/, methodResponse];
                 return [4 /*yield*/, exports.submitSignature(roninClientId, roninAccountPrivateKey, randomMessageResponse.data)];
             case 3:
                 accessToken = _a.sent();
-                methodResponse_2 = {
+                if (!accessToken)
+                    return [2 /*return*/, methodResponse];
+                result = {
                     data: accessToken,
                     success: true
                 };
-                return [2 /*return*/, methodResponse_2];
+                return [2 /*return*/, result];
             case 4:
                 error_3 = _a.sent();
                 methodResponse.errorDetails = {
@@ -303,7 +307,7 @@ var getRandomMessage = function () { return __awaiter(void 0, void 0, void 0, fu
                     }];
             case 2:
                 err_1 = _a.sent();
-                console.log(err_1);
+                console.log("getRandomMessage " + err_1);
                 return [2 /*return*/, {
                         data: '',
                         status: false
@@ -328,10 +332,14 @@ var submitSignature = function (accountAddress, privateKey, randMessage) { retur
                     })];
             case 1:
                 response = _a.sent();
+                if (response.errors) {
+                    console.log("Unable to create access token for accountAddress - " + accountAddress + ": privatekey: " + privateKey + ". " + JSON.stringify(response));
+                    return [2 /*return*/, false];
+                }
                 return [2 /*return*/, response.data.createAccessTokenWithSignature.accessToken];
             case 2:
                 err_2 = _a.sent();
-                console.log(err_2);
+                console.log("submitSignature", err_2);
                 return [2 /*return*/, false];
             case 3: return [2 /*return*/];
         }
