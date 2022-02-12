@@ -49,6 +49,11 @@ export class EventPoller extends EventEmitter implements IWorker {
                 const utcDate = new Date();
                 const localDateTime = new Date(utcDate.toString());
                 const currentHour = localDateTime.getHours();
+                if (!process.env.isNotify) {
+                    console.log('Daily reset notification is OFF. Please turn it on by setting notify variable to 1');
+                    this.poll(`${process.env.pollingInterval}`);
+                    return;
+                }
                 if ((currentHour == hourToNotify || (process.env.environment != "prod" && process.env.environment != "staging")) && !sent) {
                     const channel = this.discordClient.channels.cache.get(`${process.env.discordChannelId}`);
                     if (channel?.isText()) {
