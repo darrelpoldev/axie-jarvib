@@ -94,13 +94,13 @@ export class EventPoller extends EventEmitter implements IWorker {
                     console.log(`${scholar.name}: SLPDetails - ${SLPDetails.success}`);
                     if (!SLPDetails.success) {
                         console.log(`Unable to fetch SLP details for ${scholar.name}. Skipping to the next scholar...`);
-                        scholarsToReprocess.push(scholar);
+                        //  scholarsToReprocess.push(scholar);
                         return;
                     }
                     const MMRDetails = await getMMRInfoByRoninAddresses(roninAddressArray);
                     console.log(`${scholar.name}: MMRDetails - ${MMRDetails.success}`);
                     if (!MMRDetails.success) {
-                        scholarsToReprocess.push(scholar);
+                        //  scholarsToReprocess.push(scholar);
                         console.log(`Unable to fetch MMR details for ${scholar.name}. Skipping to the next scholar...`);
                         return;
                     }
@@ -125,7 +125,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                         const scholarAccessToken = await getAccessToken(clientAddress, scholarPrivateKey);
                         if (!accessTokenResponse.success) {
                             console.log(`Unable to fetch accesstoken for ${scholar.name}. Skipping to the next scholar...`);
-                            scholarsToReprocess.push(scholar);
+                            //  scholarsToReprocess.push(scholar);
                             return;
                         }; // Can we avoid these kind of defense?
 
@@ -139,7 +139,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                         }
                         else {
                             console.log(`Unable to fetch mission stats for ${scholar.name}. Skipping to the next scholar...`);
-                            scholarsToReprocess.push(scholar);
+                            //  scholarsToReprocess.push(scholar);
                             return;
                         }
                     }
