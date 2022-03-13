@@ -75,9 +75,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                 console.error(`Error on ${EventTypes.TICK}`, error);
             }
         });
-        //  New logic
-        //  1.
-        //  2. 
+
         this.on(EventTypes.DailyReset, async (scholarsToReprocess: Scholar[] = []) => {
             try {
                 const defaultRoninAccountAddress = `${await toClientId(`${process.env.roninAccountAddress}`)}`;
@@ -87,6 +85,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                     throw (`Unable to contact Ronin API. Will try again after a few minutes.`);
                 }
                 const scholars = scholarsToReprocess.length == 0 ? await getScholars() : scholarsToReprocess;
+                const scholarCount = scholars.length;
                 if (scholars.length == 0) throw ("Unable to fetch scholars.");
                 await Promise.all(scholars.map(async (scholar: Scholar) => {
                     const dailyStatsRecord = await getDailyStatsByScholarId(scholar.id);
@@ -100,14 +99,12 @@ export class EventPoller extends EventEmitter implements IWorker {
                     if (!SLPDetails.success) {
                         console.log(`Unable to fetch SLP details for ${scholar.name}. Skipping to the next scholar...`);
                         //  scholarsToReprocess.push(scholar);
-                        return;
                     }
                     const MMRDetails = await getMMRInfoByRoninAddresses(roninAddressArray);
                     console.log(`${scholar.name}: MMRDetails - ${MMRDetails.success}`);
                     if (!MMRDetails.success) {
                         //  scholarsToReprocess.push(scholar);
                         console.log(`Unable to fetch MMR details for ${scholar.name}. Skipping to the next scholar...`);
-                        return;
                     }
                     const clientAddress = await toClientId(scholar.roninaddress);
                     const SLPInfo = SLPDetails.data.shift();
@@ -131,7 +128,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                         if (!accessTokenResponse.success) {
                             console.log(`Unable to fetch accesstoken for ${scholar.name}. Skipping to the next scholar...`);
                             //  scholarsToReprocess.push(scholar);
-                            return;
+                            //  return;
                         }; // Can we avoid these kind of defense?
 
                         const quests: MethodResponse = await getMissionStatsByRoninAddress(scholar.roninaddress, scholarAccessToken.data);
@@ -145,7 +142,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                         else {
                             console.log(`Unable to fetch mission stats for ${scholar.name}. Skipping to the next scholar...`);
                             //  scholarsToReprocess.push(scholar);
-                            return;
+                            // return;
                         }
                     }
                     const result = await addDailyStats(dailyStats);
@@ -154,7 +151,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                     }
                     else {
                         console.log(`Unable to save daily status for ${scholar.name} - ${scholar.roninaddress}`);
-                        return;
+                        //  return;
                     }
                 })).then(() => {
                     if (scholarsToReprocess.length > 0) {
@@ -166,7 +163,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                         }, 15000);
                     }
                     console.log(`There are no scholars to reprocess. Will now start generating report.`);
-                    this.emit(EventTypes.ReadyForReport);
+                    this.emit(EventTypes.ReadyForReport, scholarCount);
                 }).catch((error: any) => {
                     console.log(error);
                     throw ("Something is wrong when fetching daily stats")
@@ -181,9 +178,14 @@ export class EventPoller extends EventEmitter implements IWorker {
             }
         });
 
-        this.on(EventTypes.ReadyForReport, async () => {
+        this.on(EventTypes.ReadyForReport, async (scholarCount: number = 0) => {
             try {
                 const dailyStatusReports = await getDailyStats();
+                if (await dailyStatusReports.length != scholarCount) {
+                    console.log('Incomplete report. Refetching scholars.');
+                    this.emit(EventTypes.DailyReset, []);
+                    return;
+                }
                 await Promise.all(dailyStatusReports.map(async (dailyStatusReport: DailyStats, index, reportList) => {
                     //  Send message
                     console.log(`${dailyStatusReport.name}, ${dailyStatusReport.totalslp}`);
