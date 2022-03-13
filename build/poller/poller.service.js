@@ -104,6 +104,11 @@ var EventPoller = /** @class */ (function (_super) {
                             utcDate = new Date();
                             localDateTime = new Date(utcDate.toString());
                             currentHour = localDateTime.getHours();
+                            if (!process.env.isNotify) {
+                                console.log('Daily reset notification is OFF. Please turn it on by setting notify variable to 1');
+                                this.poll("" + process.env.pollingInterval);
+                                return [2 /*return*/];
+                            }
                             if ((currentHour == hourToNotify || (process.env.environment != "prod" && process.env.environment != "staging")) && !sent) {
                                 channel = this.discordClient.channels.cache.get("" + process.env.discordChannelId);
                                 if (channel === null || channel === void 0 ? void 0 : channel.isText()) {
@@ -128,13 +133,10 @@ var EventPoller = /** @class */ (function (_super) {
                         return [2 /*return*/];
                     });
                 }); });
-                //  New logic
-                //  1.
-                //  2. 
                 this.on(poller_interface_1.EventTypes.DailyReset, function (scholarsToReprocess) {
                     if (scholarsToReprocess === void 0) { scholarsToReprocess = []; }
                     return __awaiter(_this, void 0, void 0, function () {
-                        var defaultRoninAccountAddress, _a, defaultRoninAccountPrivateKey, accessTokenResponse_1, scholars_1, _b, error_1;
+                        var defaultRoninAccountAddress, _a, defaultRoninAccountPrivateKey, accessTokenResponse_1, scholars_1, _b, scholarCount_1, error_1;
                         var _this = this;
                         return __generator(this, function (_c) {
                             switch (_c.label) {
@@ -161,6 +163,7 @@ var EventPoller = /** @class */ (function (_super) {
                                     _c.label = 5;
                                 case 5:
                                     scholars_1 = _b;
+                                    scholarCount_1 = scholars_1.length;
                                     if (scholars_1.length == 0)
                                         throw ("Unable to fetch scholars.");
                                     return [4 /*yield*/, Promise.all(scholars_1.map(function (scholar) { return __awaiter(_this, void 0, void 0, function () {
@@ -181,17 +184,15 @@ var EventPoller = /** @class */ (function (_super) {
                                                         console.log(scholar.name + ": SLPDetails - " + SLPDetails.success);
                                                         if (!SLPDetails.success) {
                                                             console.log("Unable to fetch SLP details for " + scholar.name + ". Skipping to the next scholar...");
-                                                            scholarsToReprocess.push(scholar);
-                                                            return [2 /*return*/];
+                                                            //  scholarsToReprocess.push(scholar);
                                                         }
                                                         return [4 /*yield*/, ronin_service_1.getMMRInfoByRoninAddresses(roninAddressArray)];
                                                     case 3:
                                                         MMRDetails = _a.sent();
                                                         console.log(scholar.name + ": MMRDetails - " + MMRDetails.success);
                                                         if (!MMRDetails.success) {
-                                                            scholarsToReprocess.push(scholar);
+                                                            //  scholarsToReprocess.push(scholar);
                                                             console.log("Unable to fetch MMR details for " + scholar.name + ". Skipping to the next scholar...");
-                                                            return [2 /*return*/];
                                                         }
                                                         return [4 /*yield*/, shared_service_1.toClientId(scholar.roninaddress)];
                                                     case 4:
@@ -218,8 +219,8 @@ var EventPoller = /** @class */ (function (_super) {
                                                         scholarAccessToken = _a.sent();
                                                         if (!accessTokenResponse_1.success) {
                                                             console.log("Unable to fetch accesstoken for " + scholar.name + ". Skipping to the next scholar...");
-                                                            scholarsToReprocess.push(scholar);
-                                                            return [2 /*return*/];
+                                                            //  scholarsToReprocess.push(scholar);
+                                                            //  return;
                                                         }
                                                         ; // Can we avoid these kind of defense?
                                                         return [4 /*yield*/, ronin_service_1.getMissionStatsByRoninAddress(scholar.roninaddress, scholarAccessToken.data)];
@@ -234,8 +235,8 @@ var EventPoller = /** @class */ (function (_super) {
                                                         }
                                                         else {
                                                             console.log("Unable to fetch mission stats for " + scholar.name + ". Skipping to the next scholar...");
-                                                            scholarsToReprocess.push(scholar);
-                                                            return [2 /*return*/];
+                                                            //  scholarsToReprocess.push(scholar);
+                                                            // return;
                                                         }
                                                         _a.label = 8;
                                                     case 8: return [4 /*yield*/, scholars_service_1.addDailyStats(dailyStats)];
@@ -246,7 +247,7 @@ var EventPoller = /** @class */ (function (_super) {
                                                         }
                                                         else {
                                                             console.log("Unable to save daily status for " + scholar.name + " - " + scholar.roninaddress);
-                                                            return [2 /*return*/];
+                                                            //  return;
                                                         }
                                                         return [2 /*return*/];
                                                 }
@@ -261,7 +262,7 @@ var EventPoller = /** @class */ (function (_super) {
                                                 }, 15000);
                                             }
                                             console.log("There are no scholars to reprocess. Will now start generating report.");
-                                            _this.emit(poller_interface_1.EventTypes.ReadyForReport);
+                                            _this.emit(poller_interface_1.EventTypes.ReadyForReport, scholarCount_1);
                                         }).catch(function (error) {
                                             console.log(error);
                                             throw ("Something is wrong when fetching daily stats");
@@ -283,83 +284,93 @@ var EventPoller = /** @class */ (function (_super) {
                         });
                     });
                 });
-                this.on(poller_interface_1.EventTypes.ReadyForReport, function () { return __awaiter(_this, void 0, void 0, function () {
-                    var dailyStatusReports, error_2;
-                    var _this = this;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                _a.trys.push([0, 3, , 4]);
-                                return [4 /*yield*/, scholars_service_1.getDailyStats()];
-                            case 1:
-                                dailyStatusReports = _a.sent();
-                                return [4 /*yield*/, Promise.all(dailyStatusReports.map(function (dailyStatusReport, index, reportList) { return __awaiter(_this, void 0, void 0, function () {
-                                        var embededMessage;
-                                        return __generator(this, function (_a) {
-                                            switch (_a.label) {
-                                                case 0:
-                                                    //  Send message
-                                                    console.log(dailyStatusReport.name + ", " + dailyStatusReport.totalslp);
-                                                    embededMessage = discord_commands_service_1.createMessageWithEmbeded({
-                                                        title: "" + dailyStatusReport.name,
-                                                        fields: [
-                                                            {
-                                                                name: ":moneybag: Total SLP",
-                                                                value: "" + (dailyStatusReport.totalslp || 0),
-                                                                inline: true,
-                                                            },
-                                                            {
-                                                                name: ":white_check_mark: Total Wins",
-                                                                value: "" + (dailyStatusReport.lasttotalwincount || 0),
-                                                                inline: true,
-                                                            },
-                                                            {
-                                                                name: ':rocket: MMR',
-                                                                value: "" + (dailyStatusReport.elo || 0),
-                                                                inline: true,
-                                                            },
-                                                            {
-                                                                name: ':crown: Rank',
-                                                                value: "" + (dailyStatusReport.currentrank || 0),
-                                                                inline: true,
-                                                            },
-                                                            {
-                                                                name: ':date: Timestamp',
-                                                                value: "" + moment_1.default(Date.now()).format('MMMM Do YYYY, h:mm:ss a'),
-                                                                inline: true,
-                                                            },
-                                                            {
-                                                                name: ':receipt: Ronin Address',
-                                                                value: "" + dailyStatusReport.roninaddress,
-                                                                inline: true,
-                                                            }
-                                                        ],
-                                                        footer: { text: index == (reportList.length - 1) ? "You're the noob of the day! Git good!" : "Thanks for playing. Keep it up!" }
-                                                    });
-                                                    return [4 /*yield*/, this.sendMessageToAchievements({ embeds: [embededMessage] })];
-                                                case 1:
-                                                    _a.sent();
-                                                    return [2 /*return*/];
-                                            }
-                                        });
-                                    }); })).then(function (result) {
-                                        console.log("Completed today's Report.");
-                                        _this.poll("" + process.env.pollingInterval);
-                                    }).catch(function (error) {
-                                        console.log("Unable to compose daily report...", error);
-                                        _this.sendMessageToAchievements("I'm failing master. Please check the logs. " + error);
-                                    })];
-                            case 2:
-                                _a.sent();
-                                return [3 /*break*/, 4];
-                            case 3:
-                                error_2 = _a.sent();
-                                console.log("EventTypes.ReadyForReport " + error_2);
-                                return [3 /*break*/, 4];
-                            case 4: return [2 /*return*/];
-                        }
+                this.on(poller_interface_1.EventTypes.ReadyForReport, function (scholarCount) {
+                    if (scholarCount === void 0) { scholarCount = 0; }
+                    return __awaiter(_this, void 0, void 0, function () {
+                        var dailyStatusReports, error_2;
+                        var _this = this;
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    _a.trys.push([0, 4, , 5]);
+                                    return [4 /*yield*/, scholars_service_1.getDailyStats()];
+                                case 1:
+                                    dailyStatusReports = _a.sent();
+                                    return [4 /*yield*/, dailyStatusReports.length];
+                                case 2:
+                                    if ((_a.sent()) != scholarCount) {
+                                        console.log('Incomplete report. Refetching scholars.');
+                                        this.emit(poller_interface_1.EventTypes.DailyReset, []);
+                                        return [2 /*return*/];
+                                    }
+                                    return [4 /*yield*/, Promise.all(dailyStatusReports.map(function (dailyStatusReport, index, reportList) { return __awaiter(_this, void 0, void 0, function () {
+                                            var embededMessage;
+                                            return __generator(this, function (_a) {
+                                                switch (_a.label) {
+                                                    case 0:
+                                                        //  Send message
+                                                        console.log(dailyStatusReport.name + ", " + dailyStatusReport.totalslp);
+                                                        embededMessage = discord_commands_service_1.createMessageWithEmbeded({
+                                                            title: "" + dailyStatusReport.name,
+                                                            fields: [
+                                                                {
+                                                                    name: ":moneybag: Total SLP",
+                                                                    value: "" + (dailyStatusReport.totalslp || 0),
+                                                                    inline: true,
+                                                                },
+                                                                {
+                                                                    name: ":white_check_mark: Total Wins",
+                                                                    value: "" + (dailyStatusReport.lasttotalwincount || 0),
+                                                                    inline: true,
+                                                                },
+                                                                {
+                                                                    name: ':rocket: MMR',
+                                                                    value: "" + (dailyStatusReport.elo || 0),
+                                                                    inline: true,
+                                                                },
+                                                                {
+                                                                    name: ':crown: Rank',
+                                                                    value: "" + (dailyStatusReport.currentrank || 0),
+                                                                    inline: true,
+                                                                },
+                                                                {
+                                                                    name: ':date: Timestamp',
+                                                                    value: "" + moment_1.default(Date.now()).format('MMMM Do YYYY, h:mm:ss a'),
+                                                                    inline: true,
+                                                                },
+                                                                {
+                                                                    name: ':receipt: Ronin Address',
+                                                                    value: "" + dailyStatusReport.roninaddress,
+                                                                    inline: true,
+                                                                }
+                                                            ],
+                                                            footer: { text: index == (reportList.length - 1) ? "You're the noob of the day! Git good!" : "Thanks for playing. Keep it up!" }
+                                                        });
+                                                        return [4 /*yield*/, this.sendMessageToAchievements({ embeds: [embededMessage] })];
+                                                    case 1:
+                                                        _a.sent();
+                                                        return [2 /*return*/];
+                                                }
+                                            });
+                                        }); })).then(function (result) {
+                                            console.log("Completed today's Report.");
+                                            _this.poll("" + process.env.pollingInterval);
+                                        }).catch(function (error) {
+                                            console.log("Unable to compose daily report...", error);
+                                            _this.sendMessageToAchievements("I'm failing master. Please check the logs. " + error);
+                                        })];
+                                case 3:
+                                    _a.sent();
+                                    return [3 /*break*/, 5];
+                                case 4:
+                                    error_2 = _a.sent();
+                                    console.log("EventTypes.ReadyForReport " + error_2);
+                                    return [3 /*break*/, 5];
+                                case 5: return [2 /*return*/];
+                            }
+                        });
                     });
-                }); });
+                });
                 return [2 /*return*/];
             });
         });

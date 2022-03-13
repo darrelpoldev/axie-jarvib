@@ -124,7 +124,7 @@ export const getDailyStatsByScholarId = async (scholarId: number) => {
     success: false,
   };
   try {
-    const query = `select * from daily_stats where scholarid = ${scholarId} and created_on > now() - interval '1 day' LIMIT 1;`;
+    const query = `select * from daily_stats where scholarid = ${scholarId} and created_on >= current_date::timestamp and created_on < current_date::timestamp + interval '1 day' LIMIT 1;`;
     const queryResult = await executeQuery(query);
     if (queryResult.success) {
       const rowData = <DailyStats[]>queryResult.data.rows;

@@ -221,7 +221,7 @@ var getDailyStatsByScholarId = function (scholarId) { return __awaiter(void 0, v
                 _a.label = 1;
             case 1:
                 _a.trys.push([1, 3, 4, 5]);
-                query = "select * from daily_stats where scholarid = " + scholarId + " and created_on > now() - interval '1 day' LIMIT 1;";
+                query = "select * from daily_stats where scholarid = " + scholarId + " and created_on >= current_date::timestamp and created_on < current_date::timestamp + interval '1 day' LIMIT 1;";
                 return [4 /*yield*/, scholars_repository_1.executeQuery(query)];
             case 2:
                 queryResult = _a.sent();
