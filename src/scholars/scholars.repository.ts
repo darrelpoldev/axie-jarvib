@@ -8,23 +8,6 @@ import { MethodResponse } from "../shared/shared.interfaces";
 import { Accumulated_SLP, DailyStats, Scholar } from "./scholars.interface";
 
 
-const dummyScholars: Scholar[] = [
-  {
-    id: 1,
-    roninaddress: "ronin:55cce35326ba3ae2f27c3976dfbb8aa10d354407",
-    name: "Jampot",
-    discordid: "250629138862440448",
-    createdOn: ""
-  },
-  {
-    id: 2,
-    roninaddress: "ronin:1e9d7412e75d4d89df9102f1bf796d86b0ade73f",
-    name: "Ichiman",
-    discordid: "543694609159684106",
-    createdOn: ""
-  }
-]
-
 /**
  * Call Repository
  */

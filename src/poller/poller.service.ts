@@ -11,7 +11,7 @@ import { MissionType, Quests, QuestType } from "../ronin/ronin.interfaces";
 import { getAccessToken, getMissionStatsByRoninAddress, getMMRInfoByRoninAddresses, getSLPInfoByRoninAddresses, getTotalSLPByRonin } from "../ronin/ronin.service";
 import { Accumulated_SLP, DailyStats, DailyStatusReport, Scholar } from "../scholars/scholars.interface";
 import { addAccumulatedSLP, dailyStatusReport } from "../scholars/scholars.repository";
-import { addDailyStats, getDailySLPByRoninAddress, getDailyStats, getDailyStatsByScholarId, getDailyStatusReport, getScholars, toRoninAddress } from "../scholars/scholars.service";
+import { addDailyStats, getDailySLPByRoninAddress, getDailyStats, getDailyStatsByScholarId, getDailyStatusReport, getScholar, getScholars, toRoninAddress } from "../scholars/scholars.service";
 import { MethodResponse } from "../shared/shared.interfaces";
 import { decryptKey, isProduction, toClientId } from "../shared/shared.service";
 import { DailyResult, EventTypes, IWorker } from "./poller.interface";
@@ -189,6 +189,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                 await Promise.all(dailyStatusReports.map(async (dailyStatusReport: DailyStats, index, reportList) => {
                     //  Send message
                     console.log(`${dailyStatusReport.name}, ${dailyStatusReport.totalslp}`);
+                    const scholar = await getScholar(dailyStatusReport.discordid);
                     const embededMessage = createMessageWithEmbeded({
                         title: `${dailyStatusReport.name}`,
                         fields: [
@@ -225,6 +226,10 @@ export class EventPoller extends EventEmitter implements IWorker {
                         footer: { text: index == (reportList.length - 1) ? `You're the noob of the day! Git good!` : `Thanks for playing. Keep it up!` }
                     });
                     await this.sendMessageToAchievements({ embeds: [embededMessage] });
+                    if (scholar?.accountownerdiscordid) {
+                        console.log('sending private report');
+                        await this.sendToAccountOwner(scholar.accountownerdiscordid, { embeds: [embededMessage] })
+                    }
                 })).then((result: any) => {
                     console.log(`Completed today's Report.`);
                     this.poll(`${process.env.pollingInterval}`);
@@ -251,6 +256,16 @@ export class EventPoller extends EventEmitter implements IWorker {
         if (channel?.isText()) {
             await channel.send(messageOrEmbed);
         }
+    }
+
+    async sendToAccountOwner(discordId: string, messageOrEmbed: any) {
+        await this.discordClient.users.fetch(discordId)
+        .then(async x => {
+            await x.send(messageOrEmbed);
+        })
+        .catch(err => {
+            console.log('unable to send report in private', err);
+        });
     }
 
     toDiscordMentionByUserId(discordId: string) {

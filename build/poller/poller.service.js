@@ -304,12 +304,15 @@ var EventPoller = /** @class */ (function (_super) {
                                         return [2 /*return*/];
                                     }
                                     return [4 /*yield*/, Promise.all(dailyStatusReports.map(function (dailyStatusReport, index, reportList) { return __awaiter(_this, void 0, void 0, function () {
-                                            var embededMessage;
+                                            var scholar, embededMessage;
                                             return __generator(this, function (_a) {
                                                 switch (_a.label) {
                                                     case 0:
                                                         //  Send message
                                                         console.log(dailyStatusReport.name + ", " + dailyStatusReport.totalslp);
+                                                        return [4 /*yield*/, scholars_service_1.getScholar(dailyStatusReport.discordid)];
+                                                    case 1:
+                                                        scholar = _a.sent();
                                                         embededMessage = discord_commands_service_1.createMessageWithEmbeded({
                                                             title: "" + dailyStatusReport.name,
                                                             fields: [
@@ -347,9 +350,15 @@ var EventPoller = /** @class */ (function (_super) {
                                                             footer: { text: index == (reportList.length - 1) ? "You're the noob of the day! Git good!" : "Thanks for playing. Keep it up!" }
                                                         });
                                                         return [4 /*yield*/, this.sendMessageToAchievements({ embeds: [embededMessage] })];
-                                                    case 1:
+                                                    case 2:
                                                         _a.sent();
-                                                        return [2 /*return*/];
+                                                        if (!(scholar === null || scholar === void 0 ? void 0 : scholar.accountownerdiscordid)) return [3 /*break*/, 4];
+                                                        console.log('sending private report');
+                                                        return [4 /*yield*/, this.sendToAccountOwner(scholar.accountownerdiscordid, { embeds: [embededMessage] })];
+                                                    case 3:
+                                                        _a.sent();
+                                                        _a.label = 4;
+                                                    case 4: return [2 /*return*/];
                                                 }
                                             });
                                         }); })).then(function (result) {
@@ -395,6 +404,32 @@ var EventPoller = /** @class */ (function (_super) {
                         _a.sent();
                         _a.label = 2;
                     case 2: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    EventPoller.prototype.sendToAccountOwner = function (discordId, messageOrEmbed) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.discordClient.users.fetch(discordId)
+                            .then(function (x) { return __awaiter(_this, void 0, void 0, function () {
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0: return [4 /*yield*/, x.send(messageOrEmbed)];
+                                    case 1:
+                                        _a.sent();
+                                        return [2 /*return*/];
+                                }
+                            });
+                        }); })
+                            .catch(function (err) {
+                            console.log('unable to send report in private', err);
+                        })];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
                 }
             });
         });

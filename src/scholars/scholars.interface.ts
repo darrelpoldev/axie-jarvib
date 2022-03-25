@@ -15,7 +15,9 @@ export interface Scholar {
   name: string,
   discordid: string,
   encryptedprivatekey?: string,
-  createdOn: string
+  createdOn: string,
+  accountowner: string;
+  accountownerdiscordid: string;
 }
 
 export interface Accumulated_SLP {
