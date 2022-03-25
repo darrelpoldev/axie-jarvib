@@ -5,6 +5,8 @@ CREATE TABLE scholars (
     discordid VARCHAR ( 255 ) NOT NULL, 
     encryptedPrivateKey TEXT NULL, 
     created_on TIMESTAMP NOT NULL
+    accountOwner VARCHAR(255) NULL, -- JDWK | ASTRD | ICHMN
+    accountOwnerDiscordId BIGINT NULL,
 );
 
 CREATE TABLE daily_stats (
