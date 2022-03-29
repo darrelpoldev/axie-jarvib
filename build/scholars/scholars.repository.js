@@ -42,22 +42,6 @@ exports.fetchDailyStats = exports.executeQuery = exports.addAccumulatedSLP = exp
  * Libraries
  */
 var Client = require('pg').Client;
-var dummyScholars = [
-    {
-        id: 1,
-        roninaddress: "ronin:55cce35326ba3ae2f27c3976dfbb8aa10d354407",
-        name: "Jampot",
-        discordid: "250629138862440448",
-        createdOn: ""
-    },
-    {
-        id: 2,
-        roninaddress: "ronin:1e9d7412e75d4d89df9102f1bf796d86b0ade73f",
-        name: "Ichiman",
-        discordid: "543694609159684106",
-        createdOn: ""
-    }
-];
 /**
  * Call Repository
  */
@@ -243,7 +227,7 @@ var fetchDailyStats = function () { return __awaiter(void 0, void 0, void 0, fun
                 return [4 /*yield*/, psqlClient.connect()];
             case 2:
                 _a.sent();
-                return [4 /*yield*/, psqlClient.query("\n      SELECT \n      (SELECT dailyStats.totalslp - lag(dailyStats.totalslp, 1, 0) OVER (order by dailyStats.created_on) as result\n      FROM daily_stats as dailyStats \n      WHERE dailyStats.roninAddress = scholars.roninAddress \n      ORDER BY dailyStats.\"created_on\" DESC LIMIT 1) AS totalslp, \n      (select dailyStats.elo FROM daily_stats as dailyStats WHERE dailyStats.roninAddress = scholars.roninAddress group by dailyStats.\"created_on\", dailyStats.elo ORDER BY dailyStats.\"created_on\" limit 1) as elo,\n      (select dailyStats.currentrank FROM daily_stats as dailyStats WHERE dailyStats.roninAddress = scholars.roninAddress group by dailyStats.\"created_on\", dailyStats.currentrank ORDER BY dailyStats.\"created_on\" limit 1) as currentrank,\n      (select dailyStats.lasttotalwincount FROM daily_stats as dailyStats WHERE dailyStats.roninAddress = scholars.roninAddress group by dailyStats.\"created_on\", dailyStats.lasttotalwincount ORDER BY dailyStats.\"created_on\" limit 1) as lasttotalwincount,\n      scholars.id as scholarid,\n      scholars.name,\n      scholars.discordid, \n      scholars.roninaddress\n      FROM scholars as scholars\n      ORDER BY totalslp DESC\n      ")];
+                return [4 /*yield*/, psqlClient.query("\n      SELECT \n      (SELECT dailyStats.totalslp - lag(dailyStats.totalslp, 1, 0) OVER (order by dailyStats.created_on) as result\n      FROM daily_stats as dailyStats \n      WHERE dailyStats.roninAddress = scholars.roninAddress \n      ORDER BY dailyStats.\"created_on\" DESC LIMIT 1) AS totalslp, \n      (select dailyStats.totalslp FROM daily_stats as dailyStats WHERE dailyStats.roninAddress = scholars.roninAddress group by dailyStats.\"created_on\", dailyStats.totalslp ORDER BY dailyStats.\"created_on\" DESC limit 1) as unclaimedslp,\n      (select dailyStats.elo FROM daily_stats as dailyStats WHERE dailyStats.roninAddress = scholars.roninAddress group by dailyStats.\"created_on\", dailyStats.elo ORDER BY dailyStats.\"created_on\" limit 1) as elo,\n      (select dailyStats.currentrank FROM daily_stats as dailyStats WHERE dailyStats.roninAddress = scholars.roninAddress group by dailyStats.\"created_on\", dailyStats.currentrank ORDER BY dailyStats.\"created_on\" limit 1) as currentrank,\n      (select dailyStats.lasttotalwincount FROM daily_stats as dailyStats WHERE dailyStats.roninAddress = scholars.roninAddress group by dailyStats.\"created_on\", dailyStats.lasttotalwincount ORDER BY dailyStats.\"created_on\" limit 1) as lasttotalwincount,\n      scholars.id as scholarid,\n      scholars.name,\n      scholars.discordid, \n      scholars.roninaddress\n      FROM scholars as scholars\n      ORDER BY totalslp DESC\n      ")];
             case 3:
                 result = _a.sent();
                 return [2 /*return*/, result];

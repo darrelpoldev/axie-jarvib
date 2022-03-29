@@ -158,7 +158,7 @@ var getMMRInfoByRoninAddresses = function (roninAddresses, authorization) { retu
                 roninResponse = _a.sent();
                 if (roninResponse) {
                     playerMMRInfos = roninResponse.map(function (itemInfo) {
-                        var playerMMR = itemInfo.items[1];
+                        var playerMMR = itemInfo.items[0];
                         return playerMMR;
                     });
                     methodResponse.data = playerMMRInfos;

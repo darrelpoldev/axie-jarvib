@@ -146,6 +146,7 @@ export const fetchDailyStats = async () => {
       FROM daily_stats as dailyStats 
       WHERE dailyStats.roninAddress = scholars.roninAddress 
       ORDER BY dailyStats."created_on" DESC LIMIT 1) AS totalslp, 
+      (select dailyStats.totalslp FROM daily_stats as dailyStats WHERE dailyStats.roninAddress = scholars.roninAddress group by dailyStats."created_on", dailyStats.totalslp ORDER BY dailyStats."created_on" DESC limit 1) as unclaimedslp,
       (select dailyStats.elo FROM daily_stats as dailyStats WHERE dailyStats.roninAddress = scholars.roninAddress group by dailyStats."created_on", dailyStats.elo ORDER BY dailyStats."created_on" limit 1) as elo,
       (select dailyStats.currentrank FROM daily_stats as dailyStats WHERE dailyStats.roninAddress = scholars.roninAddress group by dailyStats."created_on", dailyStats.currentrank ORDER BY dailyStats."created_on" limit 1) as currentrank,
       (select dailyStats.lasttotalwincount FROM daily_stats as dailyStats WHERE dailyStats.roninAddress = scholars.roninAddress group by dailyStats."created_on", dailyStats.lasttotalwincount ORDER BY dailyStats."created_on" limit 1) as lasttotalwincount,

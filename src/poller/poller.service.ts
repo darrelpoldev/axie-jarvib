@@ -194,22 +194,22 @@ export class EventPoller extends EventEmitter implements IWorker {
                         title: `${dailyStatusReport.name}`,
                         fields: [
                             {
-                                name: `:moneybag: Total SLP`,
+                                name: `:moneybag: Yesterday's SLP`,
                                 value: `${dailyStatusReport.totalslp || 0}`,
                                 inline: true,
                             },
                             {
-                                name: `:white_check_mark: Total Wins`,
-                                value: `${dailyStatusReport.lasttotalwincount || 0}`,
+                                name: `:inbox_tray: Unclaimedslp SLP`,
+                                value: `${dailyStatusReport.unclaimedslp || 0}`,
                                 inline: true,
                             },
                             {
-                                name: ':rocket: MMR',
+                                name: `:chart_with_upwards_trend: ELO`,
                                 value: `${dailyStatusReport.elo || 0}`,
                                 inline: true,
                             },
                             {
-                                name: ':crown: Rank',
+                                name: `:bar_chart: Rank`,
                                 value: `${dailyStatusReport.currentrank || 0}`,
                                 inline: true,
                             },
@@ -217,17 +217,13 @@ export class EventPoller extends EventEmitter implements IWorker {
                                 name: ':date: Timestamp',
                                 value: `${moment(Date.now()).format('MMMM Do YYYY, h:mm:ss a')}`,
                                 inline: true,
-                            },
-                            {
-                                name: ':receipt: Ronin Address',
-                                value: `${dailyStatusReport.roninaddress}`,
-                                inline: true,
                             }],
                         footer: { text: index == (reportList.length - 1) ? `You're the noob of the day! Git good!` : `Thanks for playing. Keep it up!` }
                     });
                     await this.sendMessageToAchievements({ embeds: [embededMessage] });
+                    await this.sendToAccountOwner(`${scholar?.discordid}`, { embeds: [embededMessage] })
                     if (scholar?.accountownerdiscordid) {
-                        console.log('sending private report');
+                        console.log('sending account owner report...');
                         await this.sendToAccountOwner(scholar.accountownerdiscordid, { embeds: [embededMessage] })
                     }
                 })).then((result: any) => {

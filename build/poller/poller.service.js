@@ -317,33 +317,28 @@ var EventPoller = /** @class */ (function (_super) {
                                                             title: "" + dailyStatusReport.name,
                                                             fields: [
                                                                 {
-                                                                    name: ":moneybag: Total SLP",
+                                                                    name: ":moneybag: Yesterday's SLP",
                                                                     value: "" + (dailyStatusReport.totalslp || 0),
                                                                     inline: true,
                                                                 },
                                                                 {
-                                                                    name: ":white_check_mark: Total Wins",
-                                                                    value: "" + (dailyStatusReport.lasttotalwincount || 0),
+                                                                    name: ":inbox_tray: Unclaimedslp SLP",
+                                                                    value: "" + (dailyStatusReport.unclaimedslp || 0),
                                                                     inline: true,
                                                                 },
                                                                 {
-                                                                    name: ':rocket: MMR',
+                                                                    name: ":chart_with_upwards_trend: ELO",
                                                                     value: "" + (dailyStatusReport.elo || 0),
                                                                     inline: true,
                                                                 },
                                                                 {
-                                                                    name: ':crown: Rank',
+                                                                    name: ":bar_chart: Rank",
                                                                     value: "" + (dailyStatusReport.currentrank || 0),
                                                                     inline: true,
                                                                 },
                                                                 {
                                                                     name: ':date: Timestamp',
                                                                     value: "" + moment_1.default(Date.now()).format('MMMM Do YYYY, h:mm:ss a'),
-                                                                    inline: true,
-                                                                },
-                                                                {
-                                                                    name: ':receipt: Ronin Address',
-                                                                    value: "" + dailyStatusReport.roninaddress,
                                                                     inline: true,
                                                                 }
                                                             ],
@@ -352,13 +347,16 @@ var EventPoller = /** @class */ (function (_super) {
                                                         return [4 /*yield*/, this.sendMessageToAchievements({ embeds: [embededMessage] })];
                                                     case 2:
                                                         _a.sent();
-                                                        if (!(scholar === null || scholar === void 0 ? void 0 : scholar.accountownerdiscordid)) return [3 /*break*/, 4];
-                                                        console.log('sending private report');
-                                                        return [4 /*yield*/, this.sendToAccountOwner(scholar.accountownerdiscordid, { embeds: [embededMessage] })];
+                                                        return [4 /*yield*/, this.sendToAccountOwner("" + (scholar === null || scholar === void 0 ? void 0 : scholar.discordid), { embeds: [embededMessage] })];
                                                     case 3:
                                                         _a.sent();
-                                                        _a.label = 4;
-                                                    case 4: return [2 /*return*/];
+                                                        if (!(scholar === null || scholar === void 0 ? void 0 : scholar.accountownerdiscordid)) return [3 /*break*/, 5];
+                                                        console.log('sending account owner report...');
+                                                        return [4 /*yield*/, this.sendToAccountOwner(scholar.accountownerdiscordid, { embeds: [embededMessage] })];
+                                                    case 4:
+                                                        _a.sent();
+                                                        _a.label = 5;
+                                                    case 5: return [2 /*return*/];
                                                 }
                                             });
                                         }); })).then(function (result) {
