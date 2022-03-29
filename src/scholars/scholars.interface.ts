@@ -45,5 +45,6 @@ export interface DailyStats {
   elo: number,
   currentrank: number,
   lasttotalwincount?: number,
-  createdon?: string
+  createdon?: string,
+  unclaimedslp?: number
 }

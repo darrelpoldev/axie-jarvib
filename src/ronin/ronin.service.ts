@@ -82,7 +82,7 @@ export const getMMRInfoByRoninAddresses = async (roninAddresses: string[], autho
         const roninResponse = await getData(`${process.env.roninMMREndpoint}/${roninAddresses.toString()}`, authorization);
         if (roninResponse) {
             const playerMMRInfos = roninResponse.map((itemInfo: any) => {
-                const playerMMR = itemInfo.items[1];
+                const playerMMR = itemInfo.items[0];
                 return playerMMR;
             });
             methodResponse.data = playerMMRInfos;
