@@ -54,7 +54,7 @@ export class EventPoller extends EventEmitter implements IWorker {
                     this.poll(`${process.env.pollingInterval}`);
                     return;
                 }
-                if ((currentHour == hourToNotify || (process.env.environment != "prod" && process.env.environment != "staging")) && !sent) {
+                if ((currentHour == hourToNotify || (process.env.environment != "prod" && process.env.environment != "staging")) && !sent && process.env.sendalert == "true") {
                     const channel = this.discordClient.channels.cache.get(`${process.env.discordChannelId}`);
                     if (channel?.isText()) {
                         channel.send(`Hey <@&${axieScholarRoleId}>(s) here's your daily reset alert for ${moment(Date.now()).format('MMMM Do YYYY, h:mm:ss a')}. Brought to you by your BOT police, JARVIB. `);
